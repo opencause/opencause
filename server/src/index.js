@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { config } from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
 // Routes
 import authRoutes from './routes/auth.js';
@@ -13,11 +15,16 @@ import bountyRoutes from './routes/bounties.js';
 // Load environment variables
 config();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const app = express();
 const PORT = process.env.PORT || 3010;
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false // Allow inline scripts for React
+}));
 app.use(cors());
 app.use(express.json());
 
@@ -48,9 +55,16 @@ app.use('/api/v1/causes', causeRoutes);
 app.use('/api/v1/insights', insightRoutes);
 app.use('/api/v1/bounties', bountyRoutes);
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Not found' });
+// Serve static files
+const publicPath = join(__dirname, '..', 'public');
+app.use(express.static(publicPath));
+
+// SPA fallback - serve index.html for non-API routes
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  res.sendFile(join(publicPath, 'index.html'));
 });
 
 // Error handler
