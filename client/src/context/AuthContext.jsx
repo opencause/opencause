@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://npkozldwxhkhiuxmwbua.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wa296bGR3eGhraGl1eG13YnVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxNTk4NjYsImV4cCI6MjA4NTczNTg2Nn0.1evUmEcLT7RYyUxpn4qXrg_devvhN59';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wa296bGR3eGhraGl1eG13YnVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxNTk4NjYsImV4cCI6MjA4NTczNTg2Nn0.pvn3Z-Osncx-13zpbx_UX2_da6QuGm3FmDTffjMdhMo';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
