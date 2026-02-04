@@ -67,11 +67,11 @@ export default function Home() {
                 </>
               ) : (
                 <>
-                  <Link to="/signup" className="btn btn-primary">
-                    Get Started
+                  <Link to="/explore" className="btn btn-primary">
+                    Explore Causes
                   </Link>
-                  <Link to="/login" className="btn btn-secondary">
-                    Sign In
+                  <Link to="/causes/new" className="btn btn-secondary">
+                    Pose a Cause
                   </Link>
                 </>
               )}
