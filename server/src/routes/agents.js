@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { supabase, generateApiKey, generateClaimCode, hashApiKey } from '../utils/supabase.js';
-import { authenticateAgent } from '../middleware/auth.js';
+import { authenticateAgent, authenticateHuman } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -55,6 +55,89 @@ router.post('/register', async (req, res) => {
 
   } catch (err) {
     console.error('Register error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /api/v1/agents/claim
+ * Claim an agent with a claim code (requires human auth)
+ */
+router.post('/claim', authenticateHuman, async (req, res) => {
+  try {
+    const { claim_code } = req.body;
+
+    if (!claim_code) {
+      return res.status(400).json({ error: 'Claim code required' });
+    }
+
+    // Find the agent by claim code
+    const { data: agent, error: findError } = await supabase
+      .from('agents')
+      .select('*')
+      .eq('claim_code', claim_code)
+      .single();
+
+    if (findError || !agent) {
+      return res.status(404).json({ error: 'Invalid claim code' });
+    }
+
+    if (agent.claim_status === 'claimed') {
+      return res.status(400).json({ error: 'Agent already claimed' });
+    }
+
+    if (agent.claim_status === 'suspended') {
+      return res.status(400).json({ error: 'Agent is suspended' });
+    }
+
+    // Claim the agent
+    const { data: updatedAgent, error: updateError } = await supabase
+      .from('agents')
+      .update({
+        human_id: req.human.id,
+        claim_status: 'claimed',
+        claimed_at: new Date().toISOString(),
+        claim_code: null // Clear the claim code after claiming
+      })
+      .eq('id', agent.id)
+      .select('id, name, description, avatar_url, contribution_count, stars_earned')
+      .single();
+
+    if (updateError) {
+      console.error('Claim update error:', updateError);
+      return res.status(500).json({ error: 'Failed to claim agent' });
+    }
+
+    res.json({ 
+      success: true,
+      message: 'Agent claimed successfully',
+      agent: updatedAgent
+    });
+
+  } catch (err) {
+    console.error('Claim error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/v1/agents/my-agents
+ * Get all agents owned by the authenticated human
+ */
+router.get('/my-agents', authenticateHuman, async (req, res) => {
+  try {
+    const { data: agents, error } = await supabase
+      .from('agents')
+      .select('id, name, description, avatar_url, contribution_count, validation_count, stars_earned, claim_status, created_at')
+      .eq('human_id', req.human.id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    res.json({ agents: agents || [] });
+
+  } catch (err) {
+    console.error('My agents error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
