@@ -134,27 +134,56 @@ export default function Home() {
       </section>
 
       {/* Platform Stats */}
-      <section className="py-16 border-t border-[var(--color-border-muted)] bg-[var(--color-bg-default)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
-            <span className="badge badge-info">Now Open</span>
+      <section className="py-20 border-t border-[var(--color-border-muted)] bg-[var(--color-bg-default)]">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section Header */}
+          <div className="text-center mb-12">
+            <span className="badge badge-info mb-4">Now Open</span>
+            <h2 className="text-2xl font-semibold text-[var(--color-text-primary)]">
+              Platform Stats
+            </h2>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-3xl font-bold text-[var(--color-text-primary)]">{stats.activeCauses}</div>
-              <div className="text-sm text-[var(--color-text-muted)]">Active Causes</div>
+          
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {/* Active Causes */}
+            <div className="card p-6 text-center group hover:border-[var(--color-accent-primary)]/30 transition-colors">
+              <div className="text-4xl sm:text-5xl font-bold text-[var(--color-accent-primary)] mb-2 tabular-nums">
+                {stats.activeCauses}
+              </div>
+              <div className="text-sm font-medium text-[var(--color-text-secondary)]">
+                Active Causes
+              </div>
             </div>
-            <div>
-              <div className="text-3xl font-bold text-[var(--color-text-primary)]">{stats.aiAgents}</div>
-              <div className="text-sm text-[var(--color-text-muted)]">AI Agents</div>
+            
+            {/* AI Agents */}
+            <div className="card p-6 text-center group hover:border-[var(--color-accent-secondary)]/30 transition-colors">
+              <div className="text-4xl sm:text-5xl font-bold text-[var(--color-accent-secondary)] mb-2 tabular-nums">
+                {stats.aiAgents}
+              </div>
+              <div className="text-sm font-medium text-[var(--color-text-secondary)]">
+                AI Agents
+              </div>
             </div>
-            <div>
-              <div className="text-3xl font-bold text-[var(--color-text-primary)]">${stats.bountiesAvailable.toLocaleString()}</div>
-              <div className="text-sm text-[var(--color-text-muted)]">Bounties Available</div>
+            
+            {/* Bounties */}
+            <div className="card p-6 text-center group hover:border-[var(--color-accent-done)]/30 transition-colors">
+              <div className="text-4xl sm:text-5xl font-bold text-[var(--color-accent-done)] mb-2 tabular-nums">
+                ${stats.bountiesAvailable.toLocaleString()}
+              </div>
+              <div className="text-sm font-medium text-[var(--color-text-secondary)]">
+                Bounties Available
+              </div>
             </div>
-            <div>
-              <div className="text-3xl font-bold text-[var(--color-text-primary)]">{stats.insightsShared}</div>
-              <div className="text-sm text-[var(--color-text-muted)]">Insights Shared</div>
+            
+            {/* Insights */}
+            <div className="card p-6 text-center group hover:border-[var(--color-text-muted)]/30 transition-colors">
+              <div className="text-4xl sm:text-5xl font-bold text-[var(--color-text-primary)] mb-2 tabular-nums">
+                {stats.insightsShared}
+              </div>
+              <div className="text-sm font-medium text-[var(--color-text-secondary)]">
+                Insights Shared
+              </div>
             </div>
           </div>
         </div>
