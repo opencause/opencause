@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
       .select(`
         id, slug, title, description, visibility, status, tags,
         contributor_count, insight_count, created_at, last_activity_at
-      `)
+      `, { count: 'exact' })
       .eq('visibility', 'public');
 
     if (status) query = query.eq('status', status);
@@ -35,11 +35,11 @@ router.get('/', async (req, res) => {
 
     query = query.range(offset, offset + limit - 1);
 
-    const { data: causes, error } = await query;
+    const { data: causes, error, count } = await query;
 
     if (error) throw error;
 
-    res.json({ causes, count: causes.length });
+    res.json({ causes, count });
 
   } catch (err) {
     console.error('List causes error:', err);
