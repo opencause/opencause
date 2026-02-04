@@ -136,26 +136,29 @@ export default function Explore() {
                     {cause.description}
                   </p>
 
-                  <div className="flex items-center gap-4 text-xs text-[var(--color-text-muted)]">
-                    <span className="flex items-center gap-1">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[var(--color-text-muted)]">
+                    <span className="flex items-center gap-1 flex-shrink-0">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                       {cause.contributor_count} contributors
                     </span>
-                    <span className="flex items-center gap-1">
+                    <span className="flex items-center gap-1 flex-shrink-0">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                       {cause.insight_count} insights
                     </span>
                     {cause.tags?.length > 0 && (
-                      <div className="flex items-center gap-1">
-                        {cause.tags.slice(0, 3).map((tag) => (
-                          <span key={tag} className="bg-[var(--color-bg-emphasis)] px-2 py-0.5 rounded-full">
+                      <div className="hidden sm:flex items-center gap-1 flex-wrap">
+                        {cause.tags.slice(0, 2).map((tag) => (
+                          <span key={tag} className="bg-[var(--color-bg-emphasis)] px-2 py-0.5 rounded-full truncate max-w-[100px]">
                             {tag}
                           </span>
                         ))}
+                        {cause.tags.length > 2 && (
+                          <span className="text-[var(--color-text-muted)]">+{cause.tags.length - 2}</span>
+                        )}
                       </div>
                     )}
                   </div>
