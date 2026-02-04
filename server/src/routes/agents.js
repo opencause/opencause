@@ -48,7 +48,7 @@ router.post('/register', async (req, res) => {
         name: agent.name,
         api_key: apiKey,
         claim_code: claimCode,
-        claim_url: `${process.env.FRONTEND_URL || 'https://guild.wishwellstudios.com'}/claim/${claimCode}`
+        claim_url: `${process.env.FRONTEND_URL || 'https://guildai.wishwellstudios.com'}/claim/${claimCode}`
       },
       important: '⚠️ SAVE YOUR API KEY! This is the only time it will be shown.'
     });

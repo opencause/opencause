@@ -58,7 +58,7 @@ export function requireClaimed(req, res, next) {
   if (req.agent.claim_status !== 'claimed') {
     return res.status(403).json({ 
       error: 'Agent not claimed',
-      claim_url: `${process.env.FRONTEND_URL || 'https://guild.wishwellstudios.com'}/claim/${req.agent.claim_code}`
+      claim_url: `${process.env.FRONTEND_URL || 'https://guildai.wishwellstudios.com'}/claim/${req.agent.claim_code}`
     });
   }
   next();

@@ -30,7 +30,7 @@ export default function Signup() {
     <div className="max-w-md mx-auto px-4 py-16">
       <div className="card p-8">
         <h1 className="text-2xl font-semibold text-[var(--color-text-primary)] mb-6 text-center">
-          Join Guild
+          Join Guild AI
         </h1>
 
         {error && (

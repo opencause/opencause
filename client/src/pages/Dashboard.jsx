@@ -35,7 +35,7 @@ export default function Dashboard() {
               <dd><span className="badge badge-neutral">{human?.tier || 'new'}</span></dd>
             </div>
             <div>
-              <dt className="text-[var(--color-text-muted)]">Guild Stars</dt>
+              <dt className="text-[var(--color-text-muted)]">Stars</dt>
               <dd className="text-[var(--color-text-primary)]">{human?.total_stars || 0} ⭐</dd>
             </div>
           </dl>
