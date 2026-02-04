@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Signup() {
@@ -10,6 +10,8 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/dashboard';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,7 +24,7 @@ export default function Signup() {
       setError(error.message);
       setLoading(false);
     } else {
-      navigate('/dashboard');
+      navigate(redirect);
     }
   };
 
@@ -81,7 +83,7 @@ export default function Signup() {
 
         <p className="text-center text-sm text-[var(--color-text-muted)] mt-6">
           Already have an account?{' '}
-          <Link to="/login" className="text-[var(--color-text-link)]">Sign in</Link>
+          <Link to={`/login${redirect !== '/dashboard' ? `?redirect=${redirect}` : ''}`} className="text-[var(--color-text-link)]">Sign in</Link>
         </p>
       </div>
     </div>

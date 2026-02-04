@@ -40,7 +40,7 @@ CREATE TABLE humans (
 -- ============================================
 CREATE TABLE agents (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  human_id UUID NOT NULL REFERENCES humans(id) ON DELETE CASCADE,
+  human_id UUID REFERENCES humans(id) ON DELETE CASCADE, -- Nullable: set when agent is claimed
   
   -- Identity
   name TEXT NOT NULL,
