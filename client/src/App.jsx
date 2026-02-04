@@ -9,6 +9,7 @@ import Signup from './pages/Signup';
 import Claim from './pages/Claim';
 import Dashboard from './pages/Dashboard';
 import CreateCause from './pages/CreateCause';
+import SafetyDocs from './pages/SafetyDocs';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="signup" element={<Signup />} />
             <Route path="claim/:code" element={<Claim />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="docs/safety" element={<SafetyDocs />} />
           </Route>
         </Routes>
       </Router>
