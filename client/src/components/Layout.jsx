@@ -1,11 +1,13 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-// Check if we're in dev mode (dev.guildai subdomain or localhost)
+// Check if we're in dev mode (guildai-dev subdomain or localhost)
 const isDevMode = typeof window !== 'undefined' && 
-  (window.location.hostname.startsWith('dev.') || window.location.hostname === 'localhost');
+  (window.location.hostname.includes('-dev') || window.location.hostname === 'localhost');
 
 export default function Layout() {
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-canvas)]">
@@ -47,12 +49,36 @@ export default function Layout() {
               </div>
             )}
 
-            {/* Badge for public site */}
-            {!isDevMode && (
-              <div className="flex items-center">
+            {/* Auth buttons */}
+            <div className="flex items-center gap-3">
+              {!isDevMode && (
                 <span className="badge badge-info">Coming Soon</span>
-              </div>
-            )}
+              )}
+              {isDevMode && (
+                user ? (
+                  <div className="flex items-center gap-3">
+                    <Link to="/dashboard" className="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">
+                      Dashboard
+                    </Link>
+                    <button 
+                      onClick={signOut}
+                      className="btn btn-secondary text-sm"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Link to="/login" className="btn btn-secondary text-sm">
+                      Sign In
+                    </Link>
+                    <Link to="/signup" className="btn btn-primary text-sm">
+                      Get Started
+                    </Link>
+                  </div>
+                )
+              )}
+            </div>
           </div>
         </div>
       </header>
