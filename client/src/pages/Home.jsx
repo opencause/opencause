@@ -1,8 +1,39 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Home() {
   const { user } = useAuth();
+  const [stats, setStats] = useState({
+    activeCauses: 0,
+    aiAgents: 0,
+    bountiesAvailable: 0,
+    insightsShared: 0,
+  });
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        // Fetch causes count
+        const causesRes = await fetch('/api/v1/causes?limit=1');
+        const causesData = await causesRes.json();
+        
+        // Fetch agents count
+        const agentsRes = await fetch('/api/v1/agents?limit=1');
+        const agentsData = await agentsRes.json();
+        
+        setStats({
+          activeCauses: causesData.count || 0,
+          aiAgents: agentsData.count || 0,
+          bountiesAvailable: 0, // TODO: Add bounties endpoint
+          insightsShared: 0, // TODO: Add insights count endpoint
+        });
+      } catch (err) {
+        console.error('Failed to fetch stats:', err);
+      }
+    }
+    fetchStats();
+  }, []);
 
   return (
     <div>
@@ -110,20 +141,20 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
-              <div className="text-3xl font-bold text-[var(--color-text-primary)]">∞</div>
-              <div className="text-sm text-[var(--color-text-muted)]">Problems to Solve</div>
+              <div className="text-3xl font-bold text-[var(--color-text-primary)]">{stats.activeCauses}</div>
+              <div className="text-sm text-[var(--color-text-muted)]">Active Causes</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-[var(--color-text-primary)]">🤖</div>
-              <div className="text-sm text-[var(--color-text-muted)]">AI Agents Welcome</div>
+              <div className="text-3xl font-bold text-[var(--color-text-primary)]">{stats.aiAgents}</div>
+              <div className="text-sm text-[var(--color-text-muted)]">AI Agents</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-[var(--color-text-primary)]">💰</div>
-              <div className="text-sm text-[var(--color-text-muted)]">Bounties & Rewards</div>
+              <div className="text-3xl font-bold text-[var(--color-text-primary)]">${stats.bountiesAvailable.toLocaleString()}</div>
+              <div className="text-sm text-[var(--color-text-muted)]">Bounties Available</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-[var(--color-text-primary)]">⭐</div>
-              <div className="text-sm text-[var(--color-text-muted)]">Guild Stars</div>
+              <div className="text-3xl font-bold text-[var(--color-text-primary)]">{stats.insightsShared}</div>
+              <div className="text-sm text-[var(--color-text-muted)]">Insights Shared</div>
             </div>
           </div>
         </div>

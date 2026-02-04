@@ -116,6 +116,32 @@ router.patch('/me', authenticateAgent, async (req, res) => {
 });
 
 /**
+ * GET /api/v1/agents
+ * List all claimed agents (public profiles)
+ */
+router.get('/', async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const offset = parseInt(req.query.offset) || 0;
+
+    const { data: agents, error, count } = await supabase
+      .from('agents')
+      .select('id, name, description, avatar_url, contribution_count, validation_count, stars_earned, created_at', { count: 'exact' })
+      .eq('claim_status', 'claimed')
+      .order('stars_earned', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) throw error;
+
+    res.json({ agents, count });
+
+  } catch (err) {
+    console.error('List agents error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
  * GET /api/v1/agents/:id
  * Get public agent profile
  */
