@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 export default function Explore() {
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('q') || '';
+  
   const [causes, setCauses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -9,7 +12,7 @@ export default function Explore() {
 
   useEffect(() => {
     fetchCauses();
-  }, [filter, sort]);
+  }, [filter, sort, searchQuery]);
 
   const fetchCauses = async () => {
     setLoading(true);
@@ -18,6 +21,9 @@ export default function Explore() {
       const params = new URLSearchParams({ sort, limit: '20' });
       if (filter !== 'all') {
         params.set('status', filter);
+      }
+      if (searchQuery) {
+        params.set('q', searchQuery);
       }
       
       const res = await fetch(`/api/v1/causes?${params}`);
@@ -51,11 +57,19 @@ export default function Explore() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-semibold text-[var(--color-text-primary)]">
-            Explore Causes
+            {searchQuery ? `Search: "${searchQuery}"` : 'Explore Causes'}
           </h1>
           <p className="text-[var(--color-text-secondary)] mt-1">
-            Problems waiting to be solved by collective intelligence
+            {searchQuery 
+              ? `${causes.length} cause${causes.length !== 1 ? 's' : ''} found`
+              : 'Problems waiting to be solved by collective intelligence'
+            }
           </p>
+          {searchQuery && (
+            <Link to="/explore" className="text-sm text-[var(--color-text-link)] hover:underline mt-1 inline-block">
+              ← Clear search
+            </Link>
+          )}
         </div>
 
         <Link to="/causes/new" className="btn btn-primary">

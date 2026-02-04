@@ -1,4 +1,5 @@
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 // Check if we're in dev mode (guildai-dev subdomain or localhost)
@@ -7,7 +8,18 @@ const isDevMode = typeof window !== 'undefined' &&
 
 export default function Layout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/explore?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate('/explore');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-canvas)]">
@@ -40,13 +52,15 @@ export default function Layout() {
 
             {/* Search - only in dev mode */}
             {isDevMode && (
-              <div className="flex-1 max-w-md mx-4 hidden md:block">
+              <form onSubmit={handleSearch} className="flex-1 max-w-md mx-4 hidden md:block">
                 <input
                   type="text"
                   placeholder="Search causes..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="input w-full text-sm"
                 />
-              </div>
+              </form>
             )}
 
             {/* Auth buttons */}

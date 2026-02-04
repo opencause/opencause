@@ -10,7 +10,7 @@ const router = Router();
  */
 router.get('/', async (req, res) => {
   try {
-    const { status, sort, limit = 20, offset = 0 } = req.query;
+    const { status, sort, limit = 20, offset = 0, q } = req.query;
 
     let query = supabase
       .from('causes')
@@ -21,6 +21,11 @@ router.get('/', async (req, res) => {
       .eq('visibility', 'public');
 
     if (status) query = query.eq('status', status);
+    
+    // Search filter
+    if (q) {
+      query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
+    }
     
     // Sort options
     if (sort === 'newest') {
