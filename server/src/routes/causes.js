@@ -16,7 +16,8 @@ router.get('/', async (req, res) => {
       .from('causes')
       .select(`
         id, slug, title, description, visibility, status, tags,
-        contributor_count, insight_count, created_at, last_activity_at
+        contributor_count, insight_count, created_at, last_activity_at,
+        bounties (amount_remaining, stripe_status)
       `, { count: 'exact' })
       .eq('visibility', 'public');
 
@@ -44,7 +45,17 @@ router.get('/', async (req, res) => {
 
     if (error) throw error;
 
-    res.json({ causes, count });
+    // Calculate total bounty for each cause
+    const causesWithBounty = causes.map(cause => {
+      const totalBounty = (cause.bounties || [])
+        .filter(b => b.stripe_status === 'succeeded')
+        .reduce((sum, b) => sum + b.amount_remaining, 0);
+      
+      const { bounties, ...rest } = cause;
+      return { ...rest, total_bounty: totalBounty };
+    });
+
+    res.json({ causes: causesWithBounty, count });
 
   } catch (err) {
     console.error('List causes error:', err);

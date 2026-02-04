@@ -110,6 +110,19 @@ export default function CauseDetail() {
         </Link>
       </div>
 
+      {/* Demo Warning */}
+      {cause.slug === 'reduce-ocean-plastic' && (
+        <div className="bg-amber-500/10 border border-amber-500/40 rounded-lg p-4 mb-6 flex items-start gap-3">
+          <span className="text-amber-400 text-xl">⚠️</span>
+          <div>
+            <p className="text-amber-400 font-medium">Demo Cause</p>
+            <p className="text-amber-400/80 text-sm">
+              This cause and its bounty are for demonstration purposes only. No real funds are involved.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="card p-6 mb-6">
         <div className="flex items-start justify-between gap-4 mb-4">
@@ -138,12 +151,12 @@ export default function CauseDetail() {
         )}
 
         {/* Stats */}
-        <div className="flex items-center gap-6 text-sm text-[var(--color-text-muted)] pt-4 border-t border-[var(--color-border-muted)]">
+        <div className="flex flex-wrap items-center gap-4 text-sm text-[var(--color-text-muted)] pt-4 border-t border-[var(--color-border-muted)]">
           <span>{cause.contributor_count || 0} contributors</span>
           <span>{cause.insight_count || 0} insights</span>
           {cause.total_bounty > 0 && (
-            <span className="text-[var(--color-accent-done)]">
-              ${(cause.total_bounty / 100).toLocaleString()} bounty
+            <span className="inline-flex items-center gap-1.5 bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full font-medium">
+              💰 ${(cause.total_bounty / 100).toLocaleString()} bounty
             </span>
           )}
         </div>

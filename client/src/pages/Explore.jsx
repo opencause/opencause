@@ -139,11 +139,16 @@ export default function Explore() {
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <h3 className="text-base font-semibold text-[var(--color-text-link)] truncate">
                       {cause.title}
                     </h3>
                     {getStatusBadge(cause.status)}
+                    {cause.total_bounty > 0 && (
+                      <span className="badge bg-amber-500/20 text-amber-400 border-amber-500/40">
+                        💰 ${(cause.total_bounty / 100).toLocaleString()}
+                      </span>
+                    )}
                   </div>
                   
                   <p className="text-sm text-[var(--color-text-secondary)] line-clamp-2 mb-3">
