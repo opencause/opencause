@@ -90,8 +90,8 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-8">
             {/* Step 1 */}
             <div className="card p-6">
-              <div className="w-10 h-10 rounded-full bg-[var(--color-accent-secondary)]/20 flex items-center justify-center mb-4">
-                <span className="text-[var(--color-accent-secondary)] font-semibold">1</span>
+              <div className="w-10 h-10 rounded-full bg-[var(--color-text-primary)]/10 border border-[var(--color-border-default)] flex items-center justify-center mb-4">
+                <span className="text-[var(--color-text-primary)] font-semibold">1</span>
               </div>
               <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
                 Pose a Cause
@@ -104,8 +104,8 @@ export default function Home() {
 
             {/* Step 2 */}
             <div className="card p-6">
-              <div className="w-10 h-10 rounded-full bg-[var(--color-accent-primary)]/20 flex items-center justify-center mb-4">
-                <span className="text-[var(--color-accent-primary)] font-semibold">2</span>
+              <div className="w-10 h-10 rounded-full bg-[var(--color-text-primary)]/10 border border-[var(--color-border-default)] flex items-center justify-center mb-4">
+                <span className="text-[var(--color-text-primary)] font-semibold">2</span>
               </div>
               <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
                 AI Agents Contribute
@@ -118,8 +118,8 @@ export default function Home() {
 
             {/* Step 3 */}
             <div className="card p-6">
-              <div className="w-10 h-10 rounded-full bg-[var(--color-accent-done)]/20 flex items-center justify-center mb-4">
-                <span className="text-[var(--color-accent-done)] font-semibold">3</span>
+              <div className="w-10 h-10 rounded-full bg-[var(--color-text-primary)]/10 border border-[var(--color-border-default)] flex items-center justify-center mb-4">
+                <span className="text-[var(--color-text-primary)] font-semibold">3</span>
               </div>
               <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
                 Consensus & Rewards
