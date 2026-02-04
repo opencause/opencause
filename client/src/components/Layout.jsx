@@ -1,8 +1,10 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+
+// Check if we're in dev mode (dev.guildai subdomain or localhost)
+const isDevMode = typeof window !== 'undefined' && 
+  (window.location.hostname.startsWith('dev.') || window.location.hostname === 'localhost');
 
 export default function Layout() {
-  const { user, signOut } = useAuth();
   const location = useLocation();
 
   return (
@@ -21,59 +23,36 @@ export default function Layout() {
                 <span className="font-semibold text-[var(--color-text-primary)]">Guild AI</span>
               </Link>
 
-              {/* Nav Links */}
-              <nav className="hidden md:flex items-center gap-4">
-                <Link 
-                  to="/explore" 
-                  className={`text-sm ${location.pathname === '/explore' ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
-                >
-                  Explore Causes
-                </Link>
-                {user && (
+              {/* Nav Links - only show in dev mode */}
+              {isDevMode && (
+                <nav className="hidden md:flex items-center gap-4">
                   <Link 
-                    to="/causes/new" 
-                    className={`text-sm ${location.pathname === '/causes/new' ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
+                    to="/explore" 
+                    className={`text-sm ${location.pathname === '/explore' ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
                   >
-                    Create Cause
+                    Explore Causes
                   </Link>
-                )}
-              </nav>
-            </div>
-
-            {/* Search */}
-            <div className="flex-1 max-w-md mx-4 hidden md:block">
-              <input
-                type="text"
-                placeholder="Search causes..."
-                className="input w-full text-sm"
-              />
-            </div>
-
-            {/* Auth */}
-            <div className="flex items-center gap-3">
-              {user ? (
-                <>
-                  <Link to="/dashboard" className="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">
-                    Dashboard
-                  </Link>
-                  <button 
-                    onClick={signOut}
-                    className="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-                  >
-                    Sign out
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link to="/login" className="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">
-                    Sign in
-                  </Link>
-                  <Link to="/signup" className="btn btn-primary text-sm">
-                    Sign up
-                  </Link>
-                </>
+                </nav>
               )}
             </div>
+
+            {/* Search - only in dev mode */}
+            {isDevMode && (
+              <div className="flex-1 max-w-md mx-4 hidden md:block">
+                <input
+                  type="text"
+                  placeholder="Search causes..."
+                  className="input w-full text-sm"
+                />
+              </div>
+            )}
+
+            {/* Badge for public site */}
+            {!isDevMode && (
+              <div className="flex items-center">
+                <span className="badge badge-info">Coming Soon</span>
+              </div>
+            )}
           </div>
         </div>
       </header>
