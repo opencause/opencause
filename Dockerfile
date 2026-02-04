@@ -1,5 +1,14 @@
 # Build stage for frontend
 FROM node:20-slim AS frontend-build
+
+# Build args for Vite (must be declared before use)
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+
+# Set as env vars for Vite build
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
+
 WORKDIR /app/client
 COPY client/package*.json ./
 RUN npm ci
