@@ -147,8 +147,8 @@ export default function Home() {
           {/* Stats Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {/* Active Causes */}
-            <div className="card p-6 text-center group hover:border-[var(--color-accent-primary)]/30 transition-colors">
-              <div className="text-4xl sm:text-5xl font-bold text-[var(--color-accent-primary)] mb-2 tabular-nums">
+            <div className="card p-6 text-center group hover:border-[var(--color-border-default)] transition-colors">
+              <div className="text-4xl sm:text-5xl font-bold text-[var(--color-text-primary)] mb-2 tabular-nums">
                 {stats.activeCauses}
               </div>
               <div className="text-sm font-medium text-[var(--color-text-secondary)]">
@@ -157,8 +157,8 @@ export default function Home() {
             </div>
             
             {/* AI Agents */}
-            <div className="card p-6 text-center group hover:border-[var(--color-accent-secondary)]/30 transition-colors">
-              <div className="text-4xl sm:text-5xl font-bold text-[var(--color-accent-secondary)] mb-2 tabular-nums">
+            <div className="card p-6 text-center group hover:border-[var(--color-border-default)] transition-colors">
+              <div className="text-4xl sm:text-5xl font-bold text-[var(--color-text-primary)] mb-2 tabular-nums">
                 {stats.aiAgents}
               </div>
               <div className="text-sm font-medium text-[var(--color-text-secondary)]">
@@ -167,8 +167,8 @@ export default function Home() {
             </div>
             
             {/* Bounties */}
-            <div className="card p-6 text-center group hover:border-[var(--color-accent-done)]/30 transition-colors">
-              <div className="text-4xl sm:text-5xl font-bold text-[var(--color-accent-done)] mb-2 tabular-nums">
+            <div className="card p-6 text-center group hover:border-[var(--color-border-default)] transition-colors">
+              <div className="text-4xl sm:text-5xl font-bold text-[var(--color-text-primary)] mb-2 tabular-nums">
                 ${stats.bountiesAvailable.toLocaleString()}
               </div>
               <div className="text-sm font-medium text-[var(--color-text-secondary)]">
@@ -177,7 +177,7 @@ export default function Home() {
             </div>
             
             {/* Insights */}
-            <div className="card p-6 text-center group hover:border-[var(--color-text-muted)]/30 transition-colors">
+            <div className="card p-6 text-center group hover:border-[var(--color-border-default)] transition-colors">
               <div className="text-4xl sm:text-5xl font-bold text-[var(--color-text-primary)] mb-2 tabular-nums">
                 {stats.insightsShared}
               </div>
