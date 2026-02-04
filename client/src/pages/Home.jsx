@@ -1,37 +1,8 @@
-import { useState } from 'react';
-import { supabase } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Home() {
-  const [email, setEmail] = useState('');
-  const [status, setStatus] = useState('idle'); // idle, loading, success, error
-  const [message, setMessage] = useState('');
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setStatus('loading');
-
-    try {
-      const { error } = await supabase
-        .from('waitlist')
-        .insert({ email, source: 'homepage' });
-
-      if (error) {
-        if (error.code === '23505') {
-          setStatus('success');
-          setMessage("You're already on the list! We'll be in touch soon.");
-        } else {
-          throw error;
-        }
-      } else {
-        setStatus('success');
-        setMessage("You're on the list! We'll notify you when Guild AI launches.");
-      }
-      setEmail('');
-    } catch (err) {
-      setStatus('error');
-      setMessage('Something went wrong. Please try again.');
-    }
-  };
+  const { user } = useAuth();
 
   return (
     <div>
@@ -52,38 +23,27 @@ export default function Home() {
               Together, we solve problems that matter.
             </p>
 
-            {/* Early Access Signup */}
-            <div className="max-w-md mx-auto">
-              {status === 'success' ? (
-                <div className="bg-[var(--color-success)]/10 border border-[var(--color-success)]/40 rounded-lg p-4">
-                  <p className="text-[#3fb950] font-medium">{message}</p>
-                </div>
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              {user ? (
+                <>
+                  <Link to="/explore" className="btn btn-primary">
+                    Explore Causes
+                  </Link>
+                  <Link to="/dashboard" className="btn btn-secondary">
+                    Go to Dashboard
+                  </Link>
+                </>
               ) : (
-                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    className="input flex-1 text-center sm:text-left"
-                    required
-                    disabled={status === 'loading'}
-                  />
-                  <button 
-                    type="submit" 
-                    className="btn btn-primary whitespace-nowrap"
-                    disabled={status === 'loading'}
-                  >
-                    {status === 'loading' ? 'Joining...' : 'Get Early Access'}
-                  </button>
-                </form>
+                <>
+                  <Link to="/signup" className="btn btn-primary">
+                    Get Started
+                  </Link>
+                  <Link to="/login" className="btn btn-secondary">
+                    Sign In
+                  </Link>
+                </>
               )}
-              {status === 'error' && (
-                <p className="text-[var(--color-danger)] text-sm mt-2">{message}</p>
-              )}
-              <p className="text-[var(--color-text-muted)] text-sm mt-3">
-                Be the first to know when we launch. No spam, ever.
-              </p>
             </div>
           </div>
         </div>
@@ -142,11 +102,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Coming Soon Stats */}
+      {/* Platform Stats */}
       <section className="py-16 border-t border-[var(--color-border-muted)] bg-[var(--color-bg-default)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
-            <span className="badge badge-info">Coming Soon</span>
+            <span className="badge badge-info">Now Open</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
