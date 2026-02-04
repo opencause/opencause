@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -11,9 +11,52 @@ export default function Layout() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchRef = useRef(null);
+
+  // Debounced search
+  useEffect(() => {
+    if (!searchQuery.trim() || searchQuery.length < 2) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/v1/causes?q=${encodeURIComponent(searchQuery)}&limit=5`);
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults(data.causes || []);
+          setShowDropdown(true);
+        }
+      } catch (err) {
+        console.error('Search error:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
+    setShowDropdown(false);
     if (searchQuery.trim()) {
       navigate(`/explore?q=${encodeURIComponent(searchQuery.trim())}`);
     } else {
@@ -21,10 +64,16 @@ export default function Layout() {
     }
   };
 
+  const handleResultClick = (slug) => {
+    setShowDropdown(false);
+    setSearchQuery('');
+    navigate(`/causes/${slug}`);
+  };
+
   return (
     <div className="min-h-screen bg-[var(--color-bg-canvas)]">
       {/* Header */}
-      <header className="bg-[var(--color-bg-default)] border-b border-[var(--color-border-muted)]">
+      <header className="bg-[var(--color-bg-default)] border-b border-[var(--color-border-muted)] relative z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
@@ -52,15 +101,67 @@ export default function Layout() {
 
             {/* Search - only in dev mode */}
             {isDevMode && (
-              <form onSubmit={handleSearch} className="flex-1 max-w-md mx-4 hidden md:block">
-                <input
-                  type="text"
-                  placeholder="Search causes..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="input w-full text-sm"
-                />
-              </form>
+              <div ref={searchRef} className="flex-1 max-w-md mx-4 hidden md:block relative">
+                <form onSubmit={handleSearch}>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search causes..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
+                      className="input w-full text-sm pr-8"
+                    />
+                    {isSearching && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <div className="w-4 h-4 border-2 border-[var(--color-border-default)] border-t-[var(--color-text-link)] rounded-full animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                </form>
+
+                {/* Autocomplete Dropdown */}
+                {showDropdown && searchResults.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--color-bg-default)] border border-[var(--color-border-default)] rounded-lg shadow-lg overflow-hidden z-50">
+                    {searchResults.map((cause) => (
+                      <button
+                        key={cause.id}
+                        onClick={() => handleResultClick(cause.slug)}
+                        className="w-full px-4 py-3 text-left hover:bg-[var(--color-bg-emphasis)] transition-colors border-b border-[var(--color-border-muted)] last:border-b-0"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                              {cause.title}
+                            </div>
+                            <div className="text-xs text-[var(--color-text-muted)] truncate mt-0.5">
+                              {cause.description?.substring(0, 80)}...
+                            </div>
+                          </div>
+                          <span className={`badge text-xs flex-shrink-0 ${
+                            cause.status === 'active' ? 'badge-success' : 'badge-neutral'
+                          }`}>
+                            {cause.status}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                    <button
+                      onClick={handleSearch}
+                      className="w-full px-4 py-2 text-sm text-[var(--color-text-link)] hover:bg-[var(--color-bg-emphasis)] text-center"
+                    >
+                      View all results →
+                    </button>
+                  </div>
+                )}
+
+                {/* No results message */}
+                {showDropdown && searchQuery.length >= 2 && searchResults.length === 0 && !isSearching && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--color-bg-default)] border border-[var(--color-border-default)] rounded-lg shadow-lg p-4 text-center z-50">
+                    <p className="text-sm text-[var(--color-text-muted)]">No causes found</p>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Auth buttons */}
@@ -116,7 +217,7 @@ export default function Layout() {
             <nav className="flex items-center gap-6 text-sm text-[var(--color-text-muted)]">
               <a href="#" className="hover:text-[var(--color-text-secondary)]">Terms</a>
               <a href="#" className="hover:text-[var(--color-text-secondary)]">Privacy</a>
-              <a href="#" className="hover:text-[var(--color-text-secondary)]">Docs</a>
+              <Link to="/docs/safety" className="hover:text-[var(--color-text-secondary)]">Safety</Link>
               <a href="https://github.com/wishing-well-studios/guild" className="hover:text-[var(--color-text-secondary)]">GitHub</a>
             </nav>
           </div>
