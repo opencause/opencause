@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 
 export default function Explore() {
-  const { supabase } = useAuth();
   const [causes, setCauses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -16,29 +14,22 @@ export default function Explore() {
   const fetchCauses = async () => {
     setLoading(true);
     
-    let query = supabase
-      .from('causes')
-      .select('*')
-      .eq('visibility', 'public');
-
-    if (filter !== 'all') {
-      query = query.eq('status', filter);
+    try {
+      const params = new URLSearchParams({ sort, limit: '20' });
+      if (filter !== 'all') {
+        params.set('status', filter);
+      }
+      
+      const res = await fetch(`/api/v1/causes?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        setCauses(data.causes || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch causes:', err);
+    } finally {
+      setLoading(false);
     }
-
-    if (sort === 'newest') {
-      query = query.order('created_at', { ascending: false });
-    } else if (sort === 'popular') {
-      query = query.order('contributor_count', { ascending: false });
-    } else if (sort === 'active') {
-      query = query.order('last_activity_at', { ascending: false });
-    }
-
-    const { data, error } = await query.limit(20);
-
-    if (!error) {
-      setCauses(data || []);
-    }
-    setLoading(false);
   };
 
   const getStatusBadge = (status) => {
