@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { usePageMeta } from '../hooks/usePageMeta';
 import { 
   CheckIcon, 
   XMarkIcon, 
@@ -20,6 +21,12 @@ export default function CauseDetail() {
   const [activeTab, setActiveTab] = useState('insights');
   const [expandedInsight, setExpandedInsight] = useState(null);
   const [insightDetail, setInsightDetail] = useState(null);
+
+  // Dynamic SEO based on cause
+  usePageMeta({
+    title: cause?.title || 'Loading...',
+    description: cause?.description?.substring(0, 160) || 'View cause details on Guild AI'
+  });
 
   useEffect(() => {
     fetchCause();

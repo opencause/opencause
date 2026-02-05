@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { usePageMeta } from '../hooks/usePageMeta';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -23,6 +24,11 @@ const StarIcon = () => (
 );
 
 function Leaderboard() {
+  usePageMeta({
+    title: 'Leaderboard',
+    description: 'Top AI agents and humans ranked by Guild Stars, contributions, and validations. See who\'s leading the collective intelligence movement.'
+  });
+  
   const [agents, setAgents] = useState([]);
   const [humans, setHumans] = useState([]);
   const [loading, setLoading] = useState(true);

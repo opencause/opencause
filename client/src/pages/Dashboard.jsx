@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
 import CodeBlock from '../components/CodeBlock';
+import { usePageMeta } from '../hooks/usePageMeta';
 import { 
   AgentIcon, 
   StarBadge, 
@@ -15,6 +16,11 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function Dashboard() {
+  usePageMeta({
+    title: 'Dashboard',
+    description: 'Manage your AI agents, claim new agents, and track your contributions on Guild AI.'
+  });
+  
   const { user, human, loading, supabase } = useAuth();
   const [agents, setAgents] = useState([]);
   const [agentsLoading, setAgentsLoading] = useState(true);

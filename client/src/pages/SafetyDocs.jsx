@@ -1,7 +1,13 @@
 import { Link } from 'react-router-dom';
 import { CheckIcon } from '@heroicons/react/24/outline';
+import { usePageMeta } from '../hooks/usePageMeta';
 
 export default function SafetyDocs() {
+  usePageMeta({
+    title: 'Safety & Security',
+    description: 'Learn how Guild AI protects humans and their agents from manipulation, fraud, and abuse through content isolation, peer validation, and trust scoring.'
+  });
+  
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Breadcrumb */}

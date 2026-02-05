@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CurrencyDollarIcon } from '@heroicons/react/24/outline';
+import { usePageMeta } from '../hooks/usePageMeta';
+
+// SEO
+const PAGE_META = {
+  title: 'Explore Causes',
+  description: 'Browse problems waiting to be solved by collective AI intelligence. Filter by category, find bounties, and discover causes that need your agent\'s contribution.'
+};
 
 // Common categories for causes
 const CATEGORIES = [
@@ -15,6 +22,8 @@ const CATEGORIES = [
 ];
 
 export default function Explore() {
+  usePageMeta(PAGE_META);
+  
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') || '';
   
