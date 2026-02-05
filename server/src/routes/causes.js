@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { supabase } from '../utils/supabase.js';
-import { authenticateAgent, requireClaimed } from '../middleware/auth.js';
+import { authenticateAgent, requireClaimed, authenticateHuman } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -10,7 +10,7 @@ const router = Router();
  */
 router.get('/', async (req, res) => {
   try {
-    const { status, sort, limit = 20, offset = 0, q } = req.query;
+    const { status, sort, limit = 20, offset = 0, q, category, has_bounty } = req.query;
 
     let query = supabase
       .from('causes')
@@ -27,9 +27,14 @@ router.get('/', async (req, res) => {
     if (q) {
       query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
     }
+
+    // Category filter (matches against tags array, case-insensitive)
+    if (category && category !== 'all') {
+      query = query.contains('tags', [category.toLowerCase()]);
+    }
     
-    // Sort options
-    if (sort === 'newest') {
+    // Sort options (bounty sort handled post-query)
+    if (sort === 'newest' || sort === 'bounty') {
       query = query.order('created_at', { ascending: false });
     } else if (sort === 'active') {
       query = query.order('last_activity_at', { ascending: false });
@@ -39,23 +44,48 @@ router.get('/', async (req, res) => {
       query = query.order('created_at', { ascending: false });
     }
 
-    query = query.range(offset, offset + limit - 1);
+    // For bounty queries, fetch more to filter/sort in memory
+    // For regular queries, use standard pagination
+    const needsBountyProcessing = has_bounty === 'true' || sort === 'bounty';
+    if (needsBountyProcessing) {
+      query = query.range(0, 99); // Fetch up to 100 for in-memory processing
+    } else {
+      query = query.range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
+    }
 
     const { data: causes, error, count } = await query;
 
     if (error) throw error;
 
     // Calculate total bounty for each cause
-    const causesWithBounty = causes.map(cause => {
+    // TODO: In production, filter by stripe_status === 'succeeded'
+    let causesWithBounty = causes.map(cause => {
       const totalBounty = (cause.bounties || [])
-        .filter(b => b.stripe_status === 'succeeded')
-        .reduce((sum, b) => sum + b.amount_remaining, 0);
+        .reduce((sum, b) => sum + (b.amount_remaining || 0), 0);
       
       const { bounties, ...rest } = cause;
       return { ...rest, total_bounty: totalBounty };
     });
 
-    res.json({ causes: causesWithBounty, count });
+    // Filter to only causes with bounties if requested
+    let totalCount = count; // Use Supabase count by default
+    if (has_bounty === 'true') {
+      causesWithBounty = causesWithBounty.filter(c => c.total_bounty > 0);
+      totalCount = causesWithBounty.length; // Override count when filtering in memory
+    }
+
+    // Sort by bounty if requested
+    if (sort === 'bounty') {
+      causesWithBounty.sort((a, b) => b.total_bounty - a.total_bounty);
+    }
+
+    // Apply pagination after filtering/sorting (only for bounty queries)
+    const needsMemoryPagination = has_bounty === 'true' || sort === 'bounty';
+    const paginatedCauses = needsMemoryPagination 
+      ? causesWithBounty.slice(parseInt(offset), parseInt(offset) + parseInt(limit))
+      : causesWithBounty;
+
+    res.json({ causes: paginatedCauses, count: totalCount });
 
   } catch (err) {
     console.error('List causes error:', err);
@@ -89,20 +119,107 @@ router.get('/:slug', async (req, res) => {
       return res.status(404).json({ error: 'Cause not found' });
     }
 
+    // Fetch contributors (specify FK since there are two: agent_id and invited_by)
+    const { data: contributors } = await supabase
+      .from('cause_contributors')
+      .select(`
+        role,
+        joined_at,
+        insights_submitted,
+        stars_earned_here,
+        agent:agents!cause_contributors_agent_id_fkey (id, name, avatar_url, stars_earned)
+      `)
+      .eq('cause_id', cause.id)
+      .eq('invite_status', 'active')
+      .order('insights_submitted', { ascending: false });
+
     // Calculate total bounty
+    // TODO: In production, filter by stripe_status === 'succeeded'
     const totalBounty = (cause.bounties || [])
-      .filter(b => b.stripe_status === 'succeeded')
-      .reduce((sum, b) => sum + b.amount_remaining, 0);
+      .reduce((sum, b) => sum + (b.amount_remaining || 0), 0);
 
     res.json({
       cause: {
         ...cause,
-        total_bounty: totalBounty
+        total_bounty: totalBounty,
+        contributors: contributors || []
       }
     });
 
   } catch (err) {
     console.error('Get cause error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /api/v1/causes/human
+ * Create a new cause (human-facing, for posing problems)
+ */
+router.post('/human', authenticateHuman, async (req, res) => {
+  try {
+    const { title, description, tags, visibility = 'public' } = req.body;
+
+    if (!title || title.length < 5) {
+      return res.status(400).json({ error: 'Title must be at least 5 characters' });
+    }
+    if (!description || description.length < 20) {
+      return res.status(400).json({ error: 'Description must be at least 20 characters' });
+    }
+
+    // Generate slug
+    const slug = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .substring(0, 60);
+
+    // Check slug uniqueness
+    const { data: existing } = await supabase
+      .from('causes')
+      .select('id')
+      .eq('slug', slug)
+      .single();
+
+    const finalSlug = existing ? `${slug}-${Date.now().toString(36)}` : slug;
+
+    // Create cause (no creator_agent_id since this is human-created)
+    const { data: cause, error } = await supabase
+      .from('causes')
+      .insert({
+        slug: finalSlug,
+        title,
+        description,
+        tags: tags || [],
+        visibility,
+        status: 'active',
+        creator_human_id: req.human.id,
+        last_activity_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Create default 'main' branch
+    const { data: mainBranch } = await supabase
+      .from('branches')
+      .insert({
+        cause_id: cause.id,
+        name: 'main',
+        description: 'Primary solution branch',
+        status: 'active'
+      })
+      .select()
+      .single();
+
+    // Update cause count
+    await supabase.rpc('increment_cause_count');
+
+    res.status(201).json({ cause: { ...cause, branches: [mainBranch] } });
+
+  } catch (err) {
+    console.error('Create cause (human) error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -165,7 +282,19 @@ router.post('/', authenticateAgent, requireClaimed, async (req, res) => {
         role: 'creator'
       });
 
-    res.status(201).json({ cause });
+    // Create default 'main' branch
+    const { data: mainBranch } = await supabase
+      .from('branches')
+      .insert({
+        cause_id: cause.id,
+        name: 'main',
+        description: 'Primary solution branch',
+        status: 'active'
+      })
+      .select()
+      .single();
+
+    res.status(201).json({ cause: { ...cause, branches: [mainBranch] } });
 
   } catch (err) {
     console.error('Create cause error:', err);

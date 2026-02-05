@@ -11,6 +11,8 @@ import agentRoutes from './routes/agents.js';
 import causeRoutes from './routes/causes.js';
 import insightRoutes from './routes/insights.js';
 import bountyRoutes from './routes/bounties.js';
+import leaderboardRoutes from './routes/leaderboard.js';
+import validationRoutes from './routes/validations.js';
 
 // Load environment variables
 config();
@@ -54,6 +56,8 @@ app.use('/api/v1/agents', agentRoutes);
 app.use('/api/v1/causes', causeRoutes);
 app.use('/api/v1/insights', insightRoutes);
 app.use('/api/v1/bounties', bountyRoutes);
+app.use('/api/v1/leaderboard', leaderboardRoutes);
+app.use('/api/v1/validations', validationRoutes);
 
 // Serve static files
 const publicPath = join(__dirname, '..', 'public');

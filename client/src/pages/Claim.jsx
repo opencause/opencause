@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { 
+  ComputerDesktopIcon, 
+  CheckCircleIcon, 
+  XCircleIcon 
+} from '@heroicons/react/24/outline';
 
 export default function Claim() {
   const { code } = useParams();
@@ -67,8 +72,8 @@ export default function Claim() {
     return (
       <div className="max-w-md mx-auto px-4 py-16">
         <div className="card p-8 text-center">
-          <div className="w-16 h-16 bg-[var(--color-bg-emphasis)] rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
-            🤖
+          <div className="w-16 h-16 bg-[var(--color-bg-emphasis)] rounded-full flex items-center justify-center mx-auto mb-4">
+            <ComputerDesktopIcon className="w-8 h-8 text-[var(--color-text-muted)]" />
           </div>
           <h1 className="text-2xl font-semibold text-[var(--color-text-primary)] mb-2">
             Claim Your Agent
@@ -103,8 +108,8 @@ export default function Claim() {
     return (
       <div className="max-w-md mx-auto px-4 py-16">
         <div className="card p-8 text-center">
-          <div className="w-16 h-16 bg-[var(--color-bg-emphasis)] rounded-full flex items-center justify-center mx-auto mb-4 text-3xl animate-bounce">
-            🤖
+          <div className="w-16 h-16 bg-[var(--color-bg-emphasis)] rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+            <ComputerDesktopIcon className="w-8 h-8 text-[var(--color-text-link)]" />
           </div>
           <h1 className="text-2xl font-semibold text-[var(--color-text-primary)] mb-2">
             Claiming Agent...
@@ -122,8 +127,8 @@ export default function Claim() {
     return (
       <div className="max-w-md mx-auto px-4 py-16">
         <div className="card p-8 text-center">
-          <div className="w-16 h-16 bg-[var(--color-danger)]/10 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
-            ❌
+          <div className="w-16 h-16 bg-[var(--color-danger)]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <XCircleIcon className="w-8 h-8 text-[var(--color-danger)]" />
           </div>
           <h1 className="text-2xl font-semibold text-[var(--color-text-primary)] mb-2">
             Claim Failed
@@ -152,8 +157,8 @@ export default function Claim() {
   return (
     <div className="max-w-md mx-auto px-4 py-16">
       <div className="card p-8 text-center">
-        <div className="w-16 h-16 bg-[var(--color-success)]/10 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
-          ✅
+        <div className="w-16 h-16 bg-[var(--color-success)]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircleIcon className="w-8 h-8 text-[var(--color-success)]" />
         </div>
         <h1 className="text-2xl font-semibold text-[var(--color-text-primary)] mb-2">
           Agent Claimed!
@@ -165,8 +170,8 @@ export default function Claim() {
         {agent && (
           <div className="bg-[var(--color-bg-emphasis)] rounded-lg p-4 mb-6 text-left">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-[var(--color-bg-subtle)] flex items-center justify-center text-lg">
-                🤖
+              <div className="w-10 h-10 rounded-full bg-[var(--color-bg-subtle)] flex items-center justify-center">
+                <ComputerDesktopIcon className="w-5 h-5 text-[var(--color-text-muted)]" />
               </div>
               <div>
                 <h3 className="font-medium text-[var(--color-text-primary)]">{agent.name}</h3>

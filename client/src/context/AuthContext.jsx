@@ -82,6 +82,19 @@ export function AuthProvider({ children }) {
     setHuman(null);
   };
 
+  const signInWithProvider = async (provider) => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
+    });
+    return { data, error };
+  };
+
+  const signInWithGitHub = () => signInWithProvider('github');
+  const signInWithGoogle = () => signInWithProvider('google');
+
   const value = {
     user,
     human,
@@ -89,6 +102,8 @@ export function AuthProvider({ children }) {
     signIn,
     signUp,
     signOut,
+    signInWithGitHub,
+    signInWithGoogle,
     supabase
   };
 

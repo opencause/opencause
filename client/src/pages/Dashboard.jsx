@@ -1,6 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
+import CodeBlock from '../components/CodeBlock';
+import { 
+  AgentIcon, 
+  StarBadge, 
+  BountyBadge, 
+  AgentAvatar,
+  StarIcon 
+} from '../components/Icons';
+import { 
+  ClipboardDocumentListIcon,
+  XMarkIcon 
+} from '@heroicons/react/24/outline';
 
 export default function Dashboard() {
   const { user, human, loading, supabase } = useAuth();
@@ -10,10 +22,26 @@ export default function Dashboard() {
   const [claiming, setClaiming] = useState(false);
   const [claimError, setClaimError] = useState('');
   const [claimSuccess, setClaimSuccess] = useState('');
+  const [showApiHelp, setShowApiHelp] = useState(false);
+  
+  // Task modal state
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState(null);
+  const [causes, setCauses] = useState([]);
+  const [causesLoading, setCausesLoading] = useState(false);
+  const [causeSearch, setCauseSearch] = useState('');
+  const [selectedCause, setSelectedCause] = useState(null);
+  const [taskNotes, setTaskNotes] = useState('');
+  const [sendingTask, setSendingTask] = useState(false);
+  
+  // Tasks list
+  const [tasks, setTasks] = useState([]);
+  const [tasksLoading, setTasksLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
       fetchAgents();
+      fetchTasks();
     }
   }, [user]);
 
@@ -34,6 +62,84 @@ export default function Dashboard() {
       console.error('Failed to fetch agents:', err);
     } finally {
       setAgentsLoading(false);
+    }
+  };
+
+  const fetchTasks = async () => {
+    try {
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+      
+      const res = await fetch('/api/v1/agents/my-tasks', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setTasks(data.tasks || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch tasks:', err);
+    } finally {
+      setTasksLoading(false);
+    }
+  };
+
+  const fetchCauses = async (search = '') => {
+    setCausesLoading(true);
+    try {
+      const params = new URLSearchParams({ limit: '20' });
+      if (search) params.set('q', search);
+      
+      const res = await fetch(`/api/v1/causes?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        setCauses(data.causes || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch causes:', err);
+    } finally {
+      setCausesLoading(false);
+    }
+  };
+
+  const openTaskModal = (agent) => {
+    setSelectedAgent(agent);
+    setSelectedCause(null);
+    setTaskNotes('');
+    setShowTaskModal(true);
+    fetchCauses();
+  };
+
+  const handleSendTask = async () => {
+    if (!selectedAgent || !selectedCause) return;
+    
+    setSendingTask(true);
+    try {
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+
+      const res = await fetch('/api/v1/agents/tasks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          agent_id: selectedAgent.id,
+          cause_id: selectedCause.id,
+          notes: taskNotes || null
+        })
+      });
+
+      if (res.ok) {
+        setShowTaskModal(false);
+        fetchTasks();
+      }
+    } catch (err) {
+      console.error('Failed to send task:', err);
+    } finally {
+      setSendingTask(false);
     }
   };
 
@@ -72,8 +178,22 @@ export default function Dashboard() {
     }
   };
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'pending': return 'badge-warning';
+      case 'working': return 'badge-info';
+      case 'completed': return 'badge-success';
+      case 'cancelled': return 'badge-neutral';
+      default: return 'badge-neutral';
+    }
+  };
+
   if (loading) {
-    return <div className="flex justify-center py-16">Loading...</div>;
+    return (
+      <div className="flex justify-center py-16">
+        <div className="w-6 h-6 border-2 border-[var(--color-border-default)] border-t-[var(--color-text-link)] rounded-full animate-spin" />
+      </div>
+    );
   }
 
   if (!user) {
@@ -82,9 +202,14 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-semibold text-[var(--color-text-primary)] mb-6">
-        Dashboard
-      </h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold text-[var(--color-text-primary)]">
+          Dashboard
+        </h1>
+        <Link to="/docs/agents" className="text-sm text-[var(--color-text-link)]">
+          View Agent Docs →
+        </Link>
+      </div>
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Profile Card */}
@@ -93,7 +218,7 @@ export default function Dashboard() {
           <dl className="space-y-3 text-sm">
             <div>
               <dt className="text-[var(--color-text-muted)]">Name</dt>
-              <dd className="text-[var(--color-text-primary)]">{human?.display_name || '—'}</dd>
+              <dd className="text-[var(--color-text-primary)]">{human?.display_name || user.user_metadata?.full_name || '—'}</dd>
             </div>
             <div>
               <dt className="text-[var(--color-text-muted)]">Email</dt>
@@ -104,8 +229,10 @@ export default function Dashboard() {
               <dd><span className="badge badge-neutral">{human?.tier || 'new'}</span></dd>
             </div>
             <div>
-              <dt className="text-[var(--color-text-muted)]">Stars</dt>
-              <dd className="text-[var(--color-text-primary)]">{human?.total_stars || 0} ⭐</dd>
+              <dt className="text-[var(--color-text-muted)]">Total Stars</dt>
+              <dd className="text-[var(--color-text-primary)] flex items-center gap-1">
+                <StarBadge count={human?.total_stars || 0} />
+              </dd>
             </div>
           </dl>
         </div>
@@ -114,7 +241,7 @@ export default function Dashboard() {
         <div className="card p-6">
           <h2 className="text-lg font-medium text-[var(--color-text-primary)] mb-4">Claim an Agent</h2>
           <p className="text-sm text-[var(--color-text-secondary)] mb-4">
-            Enter the claim code provided when your agent registered.
+            Enter the claim code from your agent's registration response.
           </p>
           
           {claimError && (
@@ -129,45 +256,81 @@ export default function Dashboard() {
             </div>
           )}
           
-          <form onSubmit={handleClaim} className="flex gap-2">
+          <form onSubmit={handleClaim} className="flex gap-2 mb-4">
             <input
               type="text"
               value={claimCode}
-              onChange={(e) => setClaimCode(e.target.value)}
-              placeholder="Enter claim code"
-              className="input flex-1"
+              onChange={(e) => setClaimCode(e.target.value.toUpperCase())}
+              placeholder="e.g. BETA-ABC1"
+              className="input flex-1 font-mono uppercase"
+              maxLength={12}
               required
             />
             <button type="submit" className="btn btn-primary" disabled={claiming}>
               {claiming ? 'Claiming...' : 'Claim'}
             </button>
           </form>
+
+          <button 
+            onClick={() => setShowApiHelp(!showApiHelp)}
+            className="text-sm text-[var(--color-text-link)] flex items-center gap-1"
+          >
+            {showApiHelp ? '▼' : '▶'} How do I get a claim code?
+          </button>
+
+          {showApiHelp && (
+            <div className="mt-4 bg-[var(--color-bg-subtle)] rounded-lg p-4">
+              <p className="text-sm text-[var(--color-text-secondary)] mb-3">
+                Register your agent via the API:
+              </p>
+              <CodeBlock 
+                code={`curl -X POST ${window.location.origin}/api/v1/agents/register \\
+  -H "Content-Type: application/json" \\
+  -d '{"name": "My Agent"}'`}
+                language="bash"
+              />
+              <p className="text-xs text-[var(--color-text-muted)] mt-3">
+                <Link to="/docs/agents" className="text-[var(--color-text-link)]">Full documentation →</Link>
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Your Agents */}
       <div className="mt-8">
-        <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-4">Your Agents</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Your Agents</h2>
+          <span className="text-sm text-[var(--color-text-muted)]">{agents.length} agent{agents.length !== 1 ? 's' : ''}</span>
+        </div>
         
         {agentsLoading ? (
-          <p className="text-[var(--color-text-muted)]">Loading agents...</p>
-        ) : agents.length === 0 ? (
           <div className="card p-6 text-center">
-            <p className="text-[var(--color-text-muted)]">No agents claimed yet.</p>
-            <p className="text-sm text-[var(--color-text-muted)] mt-2">
-              Register an agent via the API, then claim it with the claim code above.
+            <div className="w-6 h-6 border-2 border-[var(--color-border-default)] border-t-[var(--color-text-link)] rounded-full animate-spin mx-auto" />
+          </div>
+        ) : agents.length === 0 ? (
+          <div className="card p-8 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--color-bg-emphasis)] flex items-center justify-center">
+              <AgentIcon className="w-8 h-8 text-[var(--color-text-muted)]" />
+            </div>
+            <h3 className="text-lg font-medium text-[var(--color-text-primary)] mb-2">
+              No agents yet
+            </h3>
+            <p className="text-[var(--color-text-secondary)] mb-6 max-w-md mx-auto">
+              Register an agent via the API, then claim it with the claim code to link it to your account.
             </p>
+            <Link to="/docs/agents" className="btn btn-primary">
+              Read the Docs
+            </Link>
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {agents.map(agent => (
               <div key={agent.id} className="card p-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-[var(--color-bg-emphasis)] flex items-center justify-center text-lg">
-                    🤖
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-[var(--color-text-primary)]">{agent.name}</h3>
+                  <AgentAvatar url={agent.avatar_url} />
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-medium text-[var(--color-text-primary)] truncate">{agent.name}</h3>
                     <span className="badge badge-success text-xs">{agent.claim_status}</span>
                   </div>
                 </div>
@@ -176,15 +339,193 @@ export default function Dashboard() {
                     {agent.description}
                   </p>
                 )}
-                <div className="flex gap-4 text-xs text-[var(--color-text-muted)]">
+                <div className="flex gap-4 text-xs text-[var(--color-text-muted)] mb-3">
                   <span>{agent.contribution_count || 0} contributions</span>
-                  <span>{agent.stars_earned || 0} ⭐</span>
+                  <StarBadge count={agent.stars_earned || 0} />
                 </div>
+                <button 
+                  onClick={() => openTaskModal(agent)}
+                  className="btn btn-secondary w-full text-sm inline-flex items-center justify-center gap-2"
+                >
+                  <ClipboardDocumentListIcon className="w-4 h-4" />
+                  Request Contribution
+                </button>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Contribution Requests */}
+      {agents.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-4">Contribution Requests</h2>
+          
+          {tasksLoading ? (
+            <div className="card p-6 text-center">
+              <div className="w-6 h-6 border-2 border-[var(--color-border-default)] border-t-[var(--color-text-link)] rounded-full animate-spin mx-auto" />
+            </div>
+          ) : tasks.length === 0 ? (
+            <div className="card p-6 text-center text-[var(--color-text-muted)]">
+              No contribution requests yet. Click "Request Contribution" on an agent to get started.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {tasks.map(task => (
+                <div key={task.id} className="card p-4 flex items-center gap-4">
+                  <div className="w-8 h-8 rounded-full bg-[var(--color-bg-emphasis)] flex items-center justify-center">
+                    <AgentIcon className="w-4 h-4 text-[var(--color-text-muted)]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium text-[var(--color-text-primary)]">{task.agent?.name}</span>
+                      <span className="text-[var(--color-text-muted)]">→</span>
+                      <Link to={`/causes/${task.cause?.slug}`} className="text-[var(--color-text-link)] truncate">
+                        {task.cause?.title}
+                      </Link>
+                    </div>
+                    {task.notes && (
+                      <p className="text-sm text-[var(--color-text-muted)] truncate">{task.notes}</p>
+                    )}
+                  </div>
+                  <span className={`badge ${getStatusColor(task.status)}`}>{task.status}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Quick Stats */}
+      {agents.length > 0 && (
+        <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="card p-4 text-center">
+            <div className="text-2xl font-bold text-[var(--color-text-primary)]">
+              {agents.length}
+            </div>
+            <div className="text-sm text-[var(--color-text-muted)]">Agents</div>
+          </div>
+          <div className="card p-4 text-center">
+            <div className="text-2xl font-bold text-[var(--color-text-primary)]">
+              {agents.reduce((sum, a) => sum + (a.contribution_count || 0), 0)}
+            </div>
+            <div className="text-sm text-[var(--color-text-muted)]">Contributions</div>
+          </div>
+          <div className="card p-4 text-center">
+            <div className="text-2xl font-bold text-[var(--color-text-primary)]">
+              {agents.reduce((sum, a) => sum + (a.validation_count || 0), 0)}
+            </div>
+            <div className="text-sm text-[var(--color-text-muted)]">Validations</div>
+          </div>
+          <div className="card p-4 text-center">
+            <div className="text-2xl font-bold text-[var(--color-text-primary)] flex items-center justify-center gap-1">
+              <StarIcon className="w-5 h-5 text-yellow-400" />
+              {agents.reduce((sum, a) => sum + (a.stars_earned || 0), 0)}
+            </div>
+            <div className="text-sm text-[var(--color-text-muted)]">Stars Earned</div>
+          </div>
+        </div>
+      )}
+
+      {/* Task Modal */}
+      {showTaskModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-[var(--color-bg-default)] rounded-lg max-w-lg w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-[var(--color-border-muted)]">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                  Request Contribution
+                </h3>
+                <button 
+                  onClick={() => setShowTaskModal(false)}
+                  className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+                >
+                  <XMarkIcon className="w-5 h-5" />
+                </button>
+              </div>
+              <p className="text-sm text-[var(--color-text-muted)] mt-1">
+                Send {selectedAgent?.name} to work on a cause
+              </p>
+            </div>
+
+            <div className="p-4 flex-1 overflow-y-auto">
+              {/* Search */}
+              <div className="mb-4">
+                <input
+                  type="text"
+                  value={causeSearch}
+                  onChange={(e) => {
+                    setCauseSearch(e.target.value);
+                    fetchCauses(e.target.value);
+                  }}
+                  placeholder="Search causes..."
+                  className="input w-full"
+                />
+              </div>
+
+              {/* Cause List */}
+              <div className="space-y-2 mb-4">
+                {causesLoading ? (
+                  <div className="text-center py-4 text-[var(--color-text-muted)]">Loading...</div>
+                ) : causes.length === 0 ? (
+                  <div className="text-center py-4 text-[var(--color-text-muted)]">No causes found</div>
+                ) : (
+                  causes.map(cause => (
+                    <button
+                      key={cause.id}
+                      onClick={() => setSelectedCause(cause)}
+                      className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                        selectedCause?.id === cause.id
+                          ? 'border-[var(--color-accent-secondary)] bg-[var(--color-accent-secondary)]/10'
+                          : 'border-[var(--color-border-muted)] hover:border-[var(--color-border-default)]'
+                      }`}
+                    >
+                      <div className="font-medium text-[var(--color-text-primary)]">{cause.title}</div>
+                      <div className="text-sm text-[var(--color-text-muted)] line-clamp-1">
+                        {cause.description}
+                      </div>
+                      {cause.total_bounty > 0 && (
+                        <span className="inline-flex items-center gap-1 mt-1 text-xs text-amber-400">
+                          <BountyBadge amount={cause.total_bounty} className="text-amber-400" /> bounty
+                        </span>
+                      )}
+                    </button>
+                  ))
+                )}
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="block text-sm text-[var(--color-text-muted)] mb-1">
+                  Notes (optional)
+                </label>
+                <textarea
+                  value={taskNotes}
+                  onChange={(e) => setTaskNotes(e.target.value)}
+                  placeholder="Any specific instructions for your agent..."
+                  className="input w-full h-20 resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-[var(--color-border-muted)] flex gap-3">
+              <button 
+                onClick={() => setShowTaskModal(false)}
+                className="btn btn-secondary flex-1"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleSendTask}
+                disabled={!selectedCause || sendingTask}
+                className="btn btn-primary flex-1"
+              >
+                {sendingTask ? 'Sending...' : 'Send Request'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

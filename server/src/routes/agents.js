@@ -225,6 +225,224 @@ router.get('/', async (req, res) => {
 });
 
 /**
+ * GET /api/v1/agents/my-tasks
+ * Human views tasks they've created for their agents
+ */
+router.get('/my-tasks', authenticateHuman, async (req, res) => {
+  try {
+    const { data: tasks, error } = await supabase
+      .from('contribution_requests')
+      .select(`
+        id, status, priority, notes, created_at, started_at, completed_at,
+        agent:agents (id, name),
+        cause:causes (id, title, slug),
+        insight:insights (id, title)
+      `)
+      .eq('human_id', req.human.id)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) throw error;
+
+    res.json({ tasks: tasks || [] });
+
+  } catch (err) {
+    console.error('My tasks error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/v1/agents/leaderboard
+ * Top agents by stars earned
+ */
+router.get('/leaderboard', async (req, res) => {
+  try {
+    const { period, limit = 20 } = req.query;
+    const maxLimit = Math.min(parseInt(limit), 100);
+
+    // Base query for all-time leaderboard
+    let query = supabase
+      .from('agents')
+      .select(`
+        id, name, avatar_url, stars_earned, contribution_count, validation_count,
+        human:humans (display_name)
+      `)
+      .eq('claim_status', 'claimed')
+      .gt('stars_earned', 0)
+      .order('stars_earned', { ascending: false })
+      .limit(maxLimit);
+
+    const { data: agents, error } = await query;
+
+    if (error) throw error;
+
+    // Add rank
+    const leaderboard = (agents || []).map((agent, index) => ({
+      rank: index + 1,
+      id: agent.id,
+      name: agent.name,
+      avatar_url: agent.avatar_url,
+      stars: agent.stars_earned,
+      contributions: agent.contribution_count,
+      validations: agent.validation_count,
+      human_name: agent.human?.display_name
+    }));
+
+    res.json({ leaderboard, period: period || 'all-time' });
+
+  } catch (err) {
+    console.error('Leaderboard error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/v1/agents/discover
+ * Find causes that need contributions (for agents to find work)
+ */
+router.get('/discover', authenticateAgent, async (req, res) => {
+  try {
+    const { category, sort = 'newest', limit = 20 } = req.query;
+    const maxLimit = Math.min(parseInt(limit), 50);
+
+    // Get causes the agent hasn't joined yet
+    const { data: joinedCauses } = await supabase
+      .from('cause_contributors')
+      .select('cause_id')
+      .eq('agent_id', req.agent.id);
+
+    const joinedIds = (joinedCauses || []).map(c => c.cause_id);
+
+    // Find active public causes
+    let query = supabase
+      .from('causes')
+      .select(`
+        id, slug, title, description, tags, status,
+        contributor_count, insight_count, created_at,
+        bounties (amount_remaining)
+      `)
+      .eq('visibility', 'public')
+      .eq('status', 'active');
+
+    // Exclude already joined
+    if (joinedIds.length > 0) {
+      query = query.not('id', 'in', `(${joinedIds.join(',')})`);
+    }
+
+    // Category filter
+    if (category) {
+      query = query.contains('tags', [category.toLowerCase()]);
+    }
+
+    // Sort options
+    if (sort === 'bounty') {
+      query = query.order('created_at', { ascending: false }); // Will sort in memory
+    } else if (sort === 'popular') {
+      query = query.order('contributor_count', { ascending: false });
+    } else if (sort === 'needs-help') {
+      query = query.order('insight_count', { ascending: true }); // Fewest insights first
+    } else {
+      query = query.order('created_at', { ascending: false });
+    }
+
+    query = query.limit(maxLimit);
+
+    const { data: causes, error } = await query;
+
+    if (error) throw error;
+
+    // Calculate total bounty and sort by bounty if requested
+    let results = (causes || []).map(cause => {
+      const totalBounty = (cause.bounties || [])
+        .reduce((sum, b) => sum + (b.amount_remaining || 0), 0);
+      const { bounties, ...rest } = cause;
+      return { ...rest, total_bounty: totalBounty };
+    });
+
+    if (sort === 'bounty') {
+      results.sort((a, b) => b.total_bounty - a.total_bounty);
+    }
+
+    res.json({ 
+      causes: results,
+      message: results.length === 0 ? 'No new causes to discover. You may have joined them all!' : null
+    });
+
+  } catch (err) {
+    console.error('Discover error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/v1/agents/insights-to-validate
+ * Find insights that need validation (for agents to earn stars)
+ */
+router.get('/insights-to-validate', authenticateAgent, async (req, res) => {
+  try {
+    const { limit = 20 } = req.query;
+    const maxLimit = Math.min(parseInt(limit), 50);
+
+    // Get insights the agent has already validated
+    const { data: validated } = await supabase
+      .from('validations')
+      .select('insight_id')
+      .eq('agent_id', req.agent.id);
+
+    const validatedIds = (validated || []).map(v => v.insight_id);
+
+    // Get causes the agent has joined
+    const { data: joinedCauses } = await supabase
+      .from('cause_contributors')
+      .select('cause_id')
+      .eq('agent_id', req.agent.id);
+
+    const joinedIds = (joinedCauses || []).map(c => c.cause_id);
+
+    if (joinedIds.length === 0) {
+      return res.json({ 
+        insights: [],
+        message: 'Join some causes first to validate insights'
+      });
+    }
+
+    // Find pending insights from joined causes (not own, not already validated)
+    let query = supabase
+      .from('insights')
+      .select(`
+        id, title, insight_type, self_confidence, validation_count, created_at,
+        cause:causes (id, title, slug),
+        agent:agents (id, name)
+      `)
+      .in('cause_id', joinedIds)
+      .eq('validation_status', 'pending')
+      .neq('agent_id', req.agent.id)
+      .order('validation_count', { ascending: true }) // Fewest validations first
+      .order('created_at', { ascending: true })
+      .limit(maxLimit);
+
+    // Exclude already validated
+    if (validatedIds.length > 0) {
+      query = query.not('id', 'in', `(${validatedIds.join(',')})`);
+    }
+
+    const { data: insights, error } = await query;
+
+    if (error) throw error;
+
+    res.json({ 
+      insights: insights || [],
+      message: (insights || []).length === 0 ? 'No insights need validation right now' : null
+    });
+
+  } catch (err) {
+    console.error('Insights to validate error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
  * GET /api/v1/agents/:id
  * Get public agent profile
  */
@@ -245,6 +463,151 @@ router.get('/:id', async (req, res) => {
 
   } catch (err) {
     console.error('Get agent error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ============ TASK QUEUE ENDPOINTS ============
+
+/**
+ * POST /api/v1/agents/tasks
+ * Human creates a contribution request for their agent
+ */
+router.post('/tasks', authenticateHuman, async (req, res) => {
+  try {
+    const { agent_id, cause_id, branch_id, priority, notes } = req.body;
+
+    if (!agent_id || !cause_id) {
+      return res.status(400).json({ error: 'agent_id and cause_id required' });
+    }
+
+    // Verify human owns this agent
+    const { data: agent } = await supabase
+      .from('agents')
+      .select('id, name')
+      .eq('id', agent_id)
+      .eq('human_id', req.human.id)
+      .single();
+
+    if (!agent) {
+      return res.status(403).json({ error: 'Agent not found or not owned by you' });
+    }
+
+    // Verify cause exists
+    const { data: cause } = await supabase
+      .from('causes')
+      .select('id, title, slug')
+      .eq('id', cause_id)
+      .single();
+
+    if (!cause) {
+      return res.status(404).json({ error: 'Cause not found' });
+    }
+
+    // Create contribution request
+    const { data: task, error } = await supabase
+      .from('contribution_requests')
+      .insert({
+        human_id: req.human.id,
+        agent_id,
+        cause_id,
+        branch_id: branch_id || null,
+        priority: priority || 'normal',
+        notes: notes || null
+      })
+      .select(`
+        id, status, priority, notes, created_at,
+        cause:causes (id, title, slug, description)
+      `)
+      .single();
+
+    if (error) throw error;
+
+    res.status(201).json({ 
+      task,
+      message: `Contribution request sent to ${agent.name}`
+    });
+
+  } catch (err) {
+    console.error('Create task error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/v1/agents/me/tasks
+ * Agent polls for pending contribution requests
+ */
+router.get('/me/tasks', authenticateAgent, async (req, res) => {
+  try {
+    const status = req.query.status || 'pending';
+
+    const { data: tasks, error } = await supabase
+      .from('contribution_requests')
+      .select(`
+        id, status, priority, notes, created_at,
+        cause:causes (id, title, slug, description, tags),
+        branch:branches (id, name)
+      `)
+      .eq('agent_id', req.agent.id)
+      .eq('status', status)
+      .order('priority', { ascending: false })
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    res.json({ tasks: tasks || [] });
+
+  } catch (err) {
+    console.error('Get tasks error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * PATCH /api/v1/agents/tasks/:id
+ * Agent updates task status (working/completed)
+ */
+router.patch('/tasks/:id', authenticateAgent, async (req, res) => {
+  try {
+    const { status, insight_id } = req.body;
+
+    if (!status || !['working', 'completed', 'cancelled'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    // Verify agent owns this task
+    const { data: task } = await supabase
+      .from('contribution_requests')
+      .select('id, agent_id, status')
+      .eq('id', req.params.id)
+      .eq('agent_id', req.agent.id)
+      .single();
+
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    const updates = { status };
+    if (status === 'working') updates.started_at = new Date().toISOString();
+    if (status === 'completed') {
+      updates.completed_at = new Date().toISOString();
+      if (insight_id) updates.insight_id = insight_id;
+    }
+
+    const { data: updated, error } = await supabase
+      .from('contribution_requests')
+      .update(updates)
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({ task: updated });
+
+  } catch (err) {
+    console.error('Update task error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

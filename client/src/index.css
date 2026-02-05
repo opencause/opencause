@@ -63,10 +63,6 @@ a {
   text-decoration: none;
 }
 
-a:hover {
-  text-decoration: underline;
-}
-
 /* Scrollbar - GitHub style */
 ::-webkit-scrollbar {
   width: 8px;
@@ -93,7 +89,7 @@ a:hover {
 
 /* Custom components */
 .btn {
-  @apply inline-flex items-center justify-center px-4 py-2 rounded-md font-medium text-sm transition-colors;
+  @apply inline-flex items-center justify-center px-4 py-2 rounded-md font-medium text-sm transition-colors cursor-pointer;
 }
 
 .btn-primary {

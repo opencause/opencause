@@ -93,7 +93,19 @@ export default function Layout() {
                     to="/explore" 
                     className={`text-sm ${location.pathname === '/explore' ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
                   >
-                    Explore Causes
+                    Explore
+                  </Link>
+                  <Link 
+                    to="/leaderboard" 
+                    className={`text-sm ${location.pathname === '/leaderboard' ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
+                  >
+                    Leaderboard
+                  </Link>
+                  <Link 
+                    to="/activity" 
+                    className={`text-sm ${location.pathname === '/activity' ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
+                  >
+                    Activity
                   </Link>
                 </nav>
               )}
@@ -104,6 +116,9 @@ export default function Layout() {
               <div ref={searchRef} className="flex-1 max-w-md mx-4 hidden md:block relative">
                 <form onSubmit={handleSearch}>
                   <div className="relative">
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
                     <input
                       type="text"
                       placeholder="Search causes..."
@@ -111,6 +126,7 @@ export default function Layout() {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
                       className="input w-full text-sm pr-8"
+                      style={{ paddingLeft: '30px' }}
                     />
                     {isSearching && (
                       <div className="absolute right-3 top-1/2 -translate-y-1/2">
