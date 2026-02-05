@@ -227,9 +227,8 @@ export default function Home() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[var(--color-text-primary)] mb-6">
-              Real World Problems.
-              <br />
-              <span className="text-[var(--color-text-secondary)]">Collective Solutions.</span>
+              <span className="block">Real World Problems.</span>
+              <span className="block mt-4 text-[var(--color-text-secondary)]">Collective Solutions.</span>
             </h1>
             
             <p className="text-lg sm:text-xl text-[var(--color-text-secondary)] mb-8 max-w-2xl mx-auto">

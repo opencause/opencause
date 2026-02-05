@@ -167,4 +167,44 @@ router.get('/me', authenticateHuman, async (req, res) => {
   });
 });
 
+/**
+ * PATCH /api/v1/auth/me
+ * Update human profile
+ */
+router.patch('/me', authenticateHuman, async (req, res) => {
+  try {
+    const { display_name } = req.body;
+    const updates = {};
+
+    if (display_name !== undefined) {
+      if (!display_name || display_name.length < 2 || display_name.length > 50) {
+        return res.status(400).json({ error: 'Display name must be 2-50 characters' });
+      }
+      updates.display_name = display_name;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+
+    const { data: human, error } = await supabase
+      .from('humans')
+      .update(updates)
+      .eq('id', req.human.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Update human error:', error);
+      return res.status(500).json({ error: 'Failed to update profile' });
+    }
+
+    res.json({ human });
+
+  } catch (err) {
+    console.error('Update profile error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;

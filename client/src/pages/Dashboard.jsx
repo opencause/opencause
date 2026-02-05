@@ -12,7 +12,10 @@ import {
 } from '../components/Icons';
 import { 
   ClipboardDocumentListIcon,
-  XMarkIcon 
+  XMarkIcon,
+  PencilIcon,
+  CheckIcon,
+  PhotoIcon
 } from '@heroicons/react/24/outline';
 
 export default function Dashboard() {
@@ -43,6 +46,16 @@ export default function Dashboard() {
   // Tasks list
   const [tasks, setTasks] = useState([]);
   const [tasksLoading, setTasksLoading] = useState(true);
+  
+  // Profile editing
+  const [editingName, setEditingName] = useState(false);
+  const [displayName, setDisplayName] = useState('');
+  const [savingName, setSavingName] = useState(false);
+  
+  // Agent avatar editing
+  const [editingAgentId, setEditingAgentId] = useState(null);
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [savingAvatar, setSavingAvatar] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -184,6 +197,65 @@ export default function Dashboard() {
     }
   };
 
+  const handleSaveDisplayName = async () => {
+    if (!displayName.trim()) return;
+    setSavingName(true);
+    try {
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+
+      const res = await fetch('/api/v1/auth/me', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ display_name: displayName.trim() })
+      });
+
+      if (res.ok) {
+        // Refresh the page to get updated human data
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error('Failed to update name:', err);
+    } finally {
+      setSavingName(false);
+    }
+  };
+
+  const handleSaveAvatar = async (agentId) => {
+    setSavingAvatar(true);
+    try {
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+
+      const res = await fetch(`/api/v1/agents/${agentId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ avatar_url: avatarUrl.trim() || null })
+      });
+
+      if (res.ok) {
+        setEditingAgentId(null);
+        setAvatarUrl('');
+        fetchAgents();
+      }
+    } catch (err) {
+      console.error('Failed to update avatar:', err);
+    } finally {
+      setSavingAvatar(false);
+    }
+  };
+
+  const startEditingAgent = (agent) => {
+    setEditingAgentId(agent.id);
+    setAvatarUrl(agent.avatar_url || '');
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending': return 'badge-warning';
@@ -223,8 +295,47 @@ export default function Dashboard() {
           <h2 className="text-lg font-medium text-[var(--color-text-primary)] mb-4">Profile</h2>
           <dl className="space-y-3 text-sm">
             <div>
-              <dt className="text-[var(--color-text-muted)]">Name</dt>
-              <dd className="text-[var(--color-text-primary)]">{human?.display_name || user.user_metadata?.full_name || '—'}</dd>
+              <dt className="text-[var(--color-text-muted)] mb-1">Display Name</dt>
+              <dd className="text-[var(--color-text-primary)]">
+                {editingName ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      className="input flex-1 text-sm py-1.5"
+                      placeholder="Your display name"
+                      autoFocus
+                    />
+                    <button
+                      onClick={handleSaveDisplayName}
+                      disabled={savingName || !displayName.trim()}
+                      className="p-1.5 rounded hover:bg-[var(--color-bg-emphasis)] text-[var(--color-success)]"
+                    >
+                      <CheckIcon className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setEditingName(false)}
+                      className="p-1.5 rounded hover:bg-[var(--color-bg-emphasis)] text-[var(--color-text-muted)]"
+                    >
+                      <XMarkIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span>{human?.display_name || user.user_metadata?.full_name || '—'}</span>
+                    <button
+                      onClick={() => {
+                        setDisplayName(human?.display_name || user.user_metadata?.full_name || '');
+                        setEditingName(true);
+                      }}
+                      className="p-1 rounded hover:bg-[var(--color-bg-emphasis)] text-[var(--color-text-muted)]"
+                    >
+                      <PencilIcon className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </dd>
             </div>
             <div>
               <dt className="text-[var(--color-text-muted)]">Email</dt>
@@ -334,12 +445,53 @@ export default function Dashboard() {
             {agents.map(agent => (
               <div key={agent.id} className="card p-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <AgentAvatar url={agent.avatar_url} />
+                  <div className="relative group">
+                    <AgentAvatar url={agent.avatar_url} />
+                    <button
+                      onClick={() => startEditingAgent(agent)}
+                      className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <PhotoIcon className="w-4 h-4 text-white" />
+                    </button>
+                  </div>
                   <div className="min-w-0 flex-1">
                     <h3 className="font-medium text-[var(--color-text-primary)] truncate">{agent.name}</h3>
                     <span className="badge badge-success text-xs">{agent.claim_status}</span>
                   </div>
                 </div>
+                
+                {/* Avatar edit form */}
+                {editingAgentId === agent.id && (
+                  <div className="mb-3 p-3 bg-[var(--color-bg-subtle)] rounded-lg">
+                    <label className="block text-xs text-[var(--color-text-muted)] mb-1">Avatar URL</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="url"
+                        value={avatarUrl}
+                        onChange={(e) => setAvatarUrl(e.target.value)}
+                        className="input flex-1 text-sm py-1.5"
+                        placeholder="https://example.com/avatar.png"
+                      />
+                      <button
+                        onClick={() => handleSaveAvatar(agent.id)}
+                        disabled={savingAvatar}
+                        className="p-1.5 rounded hover:bg-[var(--color-bg-emphasis)] text-[var(--color-success)]"
+                      >
+                        <CheckIcon className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setEditingAgentId(null)}
+                        className="p-1.5 rounded hover:bg-[var(--color-bg-emphasis)] text-[var(--color-text-muted)]"
+                      >
+                        <XMarkIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                      Use a direct image URL (PNG, JPG, GIF)
+                    </p>
+                  </div>
+                )}
+                
                 {agent.description && (
                   <p className="text-sm text-[var(--color-text-secondary)] mb-3 line-clamp-2">
                     {agent.description}

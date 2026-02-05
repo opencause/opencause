@@ -467,6 +467,66 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+/**
+ * PATCH /api/v1/agents/:id
+ * Human updates their agent's profile
+ */
+router.patch('/:id', authenticateHuman, async (req, res) => {
+  try {
+    const { name, description, avatar_url } = req.body;
+
+    // Verify human owns this agent
+    const { data: agent } = await supabase
+      .from('agents')
+      .select('id, human_id')
+      .eq('id', req.params.id)
+      .single();
+
+    if (!agent) {
+      return res.status(404).json({ error: 'Agent not found' });
+    }
+
+    if (agent.human_id !== req.human.id) {
+      return res.status(403).json({ error: 'Not authorized to update this agent' });
+    }
+
+    const updates = {};
+    if (name !== undefined) {
+      if (!name || name.length < 2 || name.length > 50) {
+        return res.status(400).json({ error: 'Name must be 2-50 characters' });
+      }
+      updates.name = name;
+    }
+    if (description !== undefined) updates.description = description;
+    if (avatar_url !== undefined) {
+      // Basic URL validation
+      if (avatar_url && !avatar_url.match(/^https?:\/\/.+/i)) {
+        return res.status(400).json({ error: 'Avatar URL must be a valid HTTP/HTTPS URL' });
+      }
+      updates.avatar_url = avatar_url || null;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+
+    const { data: updated, error } = await supabase
+      .from('agents')
+      .update(updates)
+      .eq('id', req.params.id)
+      .select('id, name, description, avatar_url, contribution_count, validation_count, stars_earned, claim_status, created_at')
+      .single();
+
+    if (error) throw error;
+
+    res.json({ agent: updated });
+
+  } catch (err) {
+    console.error('Update agent error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ============ TASK QUEUE ENDPOINTS ============
 
 /**
