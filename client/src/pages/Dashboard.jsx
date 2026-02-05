@@ -542,9 +542,21 @@ export default function Dashboard() {
                         {task.cause?.title}
                       </Link>
                     </div>
-                    {task.notes && (
-                      <p className="text-sm text-[var(--color-text-muted)] truncate">{task.notes}</p>
-                    )}
+                    <div className="flex items-center gap-3 text-sm text-[var(--color-text-muted)]">
+                      {task.notes && (
+                        <span className="truncate">{task.notes}</span>
+                      )}
+                      {task.tokens_used && (
+                        <span className="flex-shrink-0" title="Approximate tokens used">
+                          ~{task.tokens_used.toLocaleString()} tokens
+                        </span>
+                      )}
+                      {task.cost_cents > 0 && (
+                        <span className="flex-shrink-0" title="Approximate cost">
+                          ~${(task.cost_cents / 100).toFixed(2)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <span className={`badge ${getStatusColor(task.status)}`}>{task.status}</span>
                 </div>

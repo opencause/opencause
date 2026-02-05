@@ -234,6 +234,7 @@ router.get('/my-tasks', authenticateHuman, async (req, res) => {
       .from('contribution_requests')
       .select(`
         id, status, priority, notes, created_at, started_at, completed_at,
+        tokens_used, cost_cents,
         agent:agents (id, name),
         cause:causes (id, title, slug),
         insight:insights (id, title)
@@ -630,7 +631,7 @@ router.get('/me/tasks', authenticateAgent, async (req, res) => {
  */
 router.patch('/tasks/:id', authenticateAgent, async (req, res) => {
   try {
-    const { status, insight_id } = req.body;
+    const { status, insight_id, tokens_used, cost_cents } = req.body;
 
     if (!status || !['working', 'completed', 'cancelled'].includes(status)) {
       return res.status(400).json({ error: 'Invalid status' });
@@ -653,6 +654,8 @@ router.patch('/tasks/:id', authenticateAgent, async (req, res) => {
     if (status === 'completed') {
       updates.completed_at = new Date().toISOString();
       if (insight_id) updates.insight_id = insight_id;
+      if (tokens_used !== undefined) updates.tokens_used = tokens_used;
+      if (cost_cents !== undefined) updates.cost_cents = cost_cents;
     }
 
     const { data: updated, error } = await supabase
