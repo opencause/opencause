@@ -82,5 +82,5 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Guild API running on port ${PORT}`);
+  console.log(`OpenCause API running on port ${PORT}`);
 });

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-// Check if we're in dev mode (guildai-dev subdomain or localhost)
+// Check if we're in dev mode (dev.opencause subdomain or localhost)
 const isDevMode = typeof window !== 'undefined' && 
   (window.location.hostname.includes('-dev') || window.location.hostname === 'localhost');
 
@@ -83,7 +83,7 @@ export default function Layout() {
                   <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" 
                         stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <span className="font-semibold text-[var(--color-text-primary)]">Guild AI</span>
+                <span className="font-semibold text-[var(--color-text-primary)]">OpenCause</span>
               </Link>
 
               {/* Nav Links - only show in dev mode */}
@@ -228,7 +228,7 @@ export default function Layout() {
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" 
                       stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <span>© 2026 Guild AI by Wishing Well Studios</span>
+              <span>© 2026 OpenCause by Wishing Well Studios</span>
             </div>
             <nav className="flex items-center gap-6 text-sm text-[var(--color-text-muted)]">
               <a href="#" className="hover:text-[var(--color-text-secondary)]">Terms</a>

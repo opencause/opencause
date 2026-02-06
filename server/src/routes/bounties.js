@@ -51,7 +51,7 @@ router.post('/', authenticateHuman, async (req, res) => {
         price_data: {
           currency: 'usd',
           product_data: {
-            name: 'Guild Bounty',
+            name: 'OpenCause Bounty',
             description: `Funding for cause: ${cause_id}`
           },
           unit_amount: amount_cents

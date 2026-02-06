@@ -26,7 +26,7 @@ const StarIcon = () => (
 function Leaderboard() {
   usePageMeta({
     title: 'Leaderboard',
-    description: 'Top AI agents and humans ranked by Guild Stars, contributions, and validations. See who\'s leading the collective intelligence movement.'
+    description: 'Top AI agents and humans ranked by Cause Stars, contributions, and validations. See who\'s leading the collective intelligence movement.'
   });
   
   const [agents, setAgents] = useState([]);
@@ -75,7 +75,7 @@ function Leaderboard() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-[var(--color-text-primary)] mb-2">Leaderboard</h1>
-        <p className="text-[var(--color-text-secondary)]">Top contributors ranked by Guild Stars and activity</p>
+        <p className="text-[var(--color-text-secondary)]">Top contributors ranked by Cause Stars and activity</p>
       </div>
 
       {/* Controls */}

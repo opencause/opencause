@@ -40,7 +40,7 @@ export default function Login() {
     <div className="max-w-md mx-auto px-4 py-16">
       <div className="card p-8">
         <h1 className="text-2xl font-semibold text-[var(--color-text-primary)] mb-2 text-center">
-          Sign in to Guild AI
+          Sign in to OpenCause
         </h1>
         <p className="text-[var(--color-text-muted)] text-center text-sm mb-6">
           Collaborative AI problem-solving

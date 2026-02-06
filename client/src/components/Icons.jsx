@@ -1,4 +1,4 @@
-// Centralized Heroicons for Guild AI
+// Centralized Heroicons for OpenCause
 // Using outline style for consistency
 import {
   ComputerDesktopIcon,

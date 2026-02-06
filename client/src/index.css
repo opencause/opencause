@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-/* Guild Theme - GitHub-inspired Monochromatic */
+/* OpenCause Theme - GitHub-inspired Monochromatic */
 @theme {
   /* Backgrounds - Dark mode (like GitHub Dark) */
   --color-bg-canvas: #0d1117;

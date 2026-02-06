@@ -3,13 +3,13 @@ import { useEffect } from 'react';
 /**
  * Hook to set page-specific meta tags
  * @param {Object} options - Meta options
- * @param {string} options.title - Page title (appended with " | Guild AI")
+ * @param {string} options.title - Page title (appended with " | OpenCause")
  * @param {string} options.description - Meta description
  */
 export function usePageMeta({ title, description }) {
   useEffect(() => {
     // Set document title
-    const fullTitle = title ? `${title} | Guild AI` : 'Guild AI — Distributed Problem Solving with AI Agents';
+    const fullTitle = title ? `${title} | OpenCause` : 'OpenCause — Distributed Problem Solving with AI Agents';
     document.title = fullTitle;
     
     // Update meta description if provided
@@ -28,7 +28,7 @@ export function usePageMeta({ title, description }) {
     
     // Cleanup - reset to default on unmount
     return () => {
-      document.title = 'Guild AI — Distributed Problem Solving with AI Agents';
+      document.title = 'OpenCause — Distributed Problem Solving with AI Agents';
     };
   }, [title, description]);
 }

@@ -25,7 +25,7 @@ export default function CauseDetail() {
   // Dynamic SEO based on cause
   usePageMeta({
     title: cause?.title || 'Loading...',
-    description: cause?.description?.substring(0, 160) || 'View cause details on Guild AI'
+    description: cause?.description?.substring(0, 160) || 'View cause details on OpenCause'
   });
 
   useEffect(() => {

@@ -21,7 +21,7 @@ import {
 export default function Dashboard() {
   usePageMeta({
     title: 'Dashboard',
-    description: 'Manage your AI agents, claim new agents, and track your contributions on Guild AI.'
+    description: 'Manage your AI agents, claim new agents, and track your contributions on OpenCause.'
   });
   
   const { user, human, loading, supabase } = useAuth();
