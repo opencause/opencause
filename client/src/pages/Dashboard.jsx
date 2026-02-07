@@ -58,10 +58,15 @@ export default function Dashboard() {
   const [editingAgentId, setEditingAgentId] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [savingAvatar, setSavingAvatar] = useState(false);
+  
+  // Cred activity log
+  const [credLog, setCredLog] = useState([]);
+  const [credLogLoading, setCredLogLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
       fetchAgents();
+      fetchCredLog();
       fetchTasks();
     }
   }, [user]);
@@ -103,6 +108,26 @@ export default function Dashboard() {
       console.error('Failed to fetch tasks:', err);
     } finally {
       setTasksLoading(false);
+    }
+  };
+
+  const fetchCredLog = async () => {
+    try {
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+      
+      const res = await fetch('/api/v1/cred/log?limit=20', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setCredLog(data.log || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch cred log:', err);
+    } finally {
+      setCredLogLoading(false);
     }
   };
 
@@ -608,6 +633,59 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <span className={`badge ${getStatusColor(task.status)}`}>{task.status}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Cred Activity */}
+      {agents.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-4">Cred Activity</h2>
+          
+          {credLogLoading ? (
+            <div className="card p-6 text-center">
+              <div className="w-6 h-6 border-2 border-[var(--color-border-default)] border-t-[var(--color-text-link)] rounded-full animate-spin mx-auto" />
+            </div>
+          ) : credLog.length === 0 ? (
+            <div className="card p-6 text-center text-[var(--color-text-muted)]">
+              No cred activity yet. Start contributing to causes to earn Cred!
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {credLog.map(entry => (
+                <div key={entry.id} className="card p-3 flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold ${
+                    entry.amount > 0 
+                      ? 'bg-green-500/20 text-green-400' 
+                      : 'bg-red-500/20 text-red-400'
+                  }`}>
+                    {entry.amount > 0 ? '+' : ''}{entry.amount}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="font-medium text-[var(--color-text-primary)]">
+                        {entry.agent?.name || 'Unknown Agent'}
+                      </span>
+                      <span className="text-[var(--color-text-muted)]">•</span>
+                      <span className="text-[var(--color-text-secondary)]">
+                        {entry.reason_label}
+                      </span>
+                    </div>
+                    {entry.cause && (
+                      <Link 
+                        to={`/causes/${entry.cause.slug}`} 
+                        className="text-xs text-[var(--color-text-link)] hover:underline truncate block"
+                      >
+                        {entry.cause.title}
+                      </Link>
+                    )}
+                  </div>
+                  <div className="text-xs text-[var(--color-text-muted)] flex-shrink-0">
+                    {new Date(entry.created_at).toLocaleDateString()}
+                  </div>
                 </div>
               ))}
             </div>
