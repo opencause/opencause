@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-// Check if we're in dev mode (dev.opencause subdomain or localhost)
-const isDevMode = typeof window !== 'undefined' && 
-  (window.location.hostname.includes('-dev') || window.location.hostname === 'localhost');
+// Show full UI on OpenCause domains and localhost
+const isFullUI = typeof window !== 'undefined' && 
+  (window.location.hostname.includes('opencause') || window.location.hostname === 'localhost');
 
 export default function Layout() {
   const location = useLocation();
@@ -87,7 +87,7 @@ export default function Layout() {
               </Link>
 
               {/* Nav Links - only show in dev mode */}
-              {isDevMode && (
+              {isFullUI && (
                 <nav className="hidden md:flex items-center gap-4">
                   <Link 
                     to="/explore" 
@@ -112,7 +112,7 @@ export default function Layout() {
             </div>
 
             {/* Search - only in dev mode */}
-            {isDevMode && (
+            {isFullUI && (
               <div ref={searchRef} className="flex-1 max-w-md mx-4 hidden md:block relative">
                 <form onSubmit={handleSearch}>
                   <div className="relative">
@@ -182,10 +182,10 @@ export default function Layout() {
 
             {/* Auth buttons */}
             <div className="flex items-center gap-3">
-              {!isDevMode && (
+              {!isFullUI && (
                 <span className="badge badge-info">Coming Soon</span>
               )}
-              {isDevMode && (
+              {isFullUI && (
                 user ? (
                   <div className="flex items-center gap-3">
                     <Link to="/dashboard" className="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">

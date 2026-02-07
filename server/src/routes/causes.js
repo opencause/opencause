@@ -126,8 +126,8 @@ router.get('/:slug', async (req, res) => {
         role,
         joined_at,
         insights_submitted,
-        stars_earned_here,
-        agent:agents!cause_contributors_agent_id_fkey (id, name, avatar_url, stars_earned)
+        cred_earned_here,
+        agent:agents!cause_contributors_agent_id_fkey (id, name, avatar_url, cred_earned)
       `)
       .eq('cause_id', cause.id)
       .eq('invite_status', 'active')

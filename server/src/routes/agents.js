@@ -100,7 +100,7 @@ router.post('/claim', authenticateHuman, async (req, res) => {
         claim_code: null // Clear the claim code after claiming
       })
       .eq('id', agent.id)
-      .select('id, name, description, avatar_url, contribution_count, stars_earned')
+      .select('id, name, description, avatar_url, contribution_count, cred_earned')
       .single();
 
     if (updateError) {
@@ -128,7 +128,7 @@ router.get('/my-agents', authenticateHuman, async (req, res) => {
   try {
     const { data: agents, error } = await supabase
       .from('agents')
-      .select('id, name, description, avatar_url, contribution_count, validation_count, stars_earned, claim_status, created_at')
+      .select('id, name, description, avatar_url, contribution_count, validation_count, cred_earned, claim_status, created_at')
       .eq('human_id', req.human.id)
       .order('created_at', { ascending: false });
 
@@ -158,7 +158,7 @@ router.get('/status', authenticateAgent, async (req, res) => {
   res.json({
     status: req.agent.claim_status,
     claimed: req.agent.claim_status === 'claimed',
-    stars: req.agent.stars_earned,
+    cred: req.agent.cred_earned,
     contributions: req.agent.contribution_count
   });
 });
@@ -209,9 +209,9 @@ router.get('/', async (req, res) => {
 
     const { data: agents, error, count } = await supabase
       .from('agents')
-      .select('id, name, description, avatar_url, contribution_count, validation_count, stars_earned, created_at', { count: 'exact' })
+      .select('id, name, description, avatar_url, contribution_count, validation_count, cred_earned, created_at', { count: 'exact' })
       .eq('claim_status', 'claimed')
-      .order('stars_earned', { ascending: false })
+      .order('cred_earned', { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (error) throw error;
@@ -255,7 +255,7 @@ router.get('/my-tasks', authenticateHuman, async (req, res) => {
 
 /**
  * GET /api/v1/agents/leaderboard
- * Top agents by stars earned
+ * Top agents by cred earned
  */
 router.get('/leaderboard', async (req, res) => {
   try {
@@ -266,12 +266,12 @@ router.get('/leaderboard', async (req, res) => {
     let query = supabase
       .from('agents')
       .select(`
-        id, name, avatar_url, stars_earned, contribution_count, validation_count,
+        id, name, avatar_url, cred_earned, contribution_count, validation_count,
         human:humans (display_name)
       `)
       .eq('claim_status', 'claimed')
-      .gt('stars_earned', 0)
-      .order('stars_earned', { ascending: false })
+      .gt('cred_earned', 0)
+      .order('cred_earned', { ascending: false })
       .limit(maxLimit);
 
     const { data: agents, error } = await query;
@@ -284,7 +284,7 @@ router.get('/leaderboard', async (req, res) => {
       id: agent.id,
       name: agent.name,
       avatar_url: agent.avatar_url,
-      stars: agent.stars_earned,
+      cred: agent.cred_earned,
       contributions: agent.contribution_count,
       validations: agent.validation_count,
       human_name: agent.human?.display_name
@@ -451,7 +451,7 @@ router.get('/:id', async (req, res) => {
   try {
     const { data: agent, error } = await supabase
       .from('agents')
-      .select('id, name, description, avatar_url, contribution_count, validation_count, stars_earned, created_at')
+      .select('id, name, description, avatar_url, contribution_count, validation_count, cred_earned, created_at')
       .eq('id', req.params.id)
       .eq('claim_status', 'claimed')
       .single();
@@ -515,7 +515,7 @@ router.patch('/:id', authenticateHuman, async (req, res) => {
       .from('agents')
       .update(updates)
       .eq('id', req.params.id)
-      .select('id, name, description, avatar_url, contribution_count, validation_count, stars_earned, claim_status, created_at')
+      .select('id, name, description, avatar_url, contribution_count, validation_count, cred_earned, claim_status, created_at')
       .single();
 
     if (error) throw error;
@@ -524,6 +524,54 @@ router.patch('/:id', authenticateHuman, async (req, res) => {
 
   } catch (err) {
     console.error('Update agent error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /api/v1/agents/:id
+ * Human disconnects an agent from their account
+ * Agent becomes unclaimed and can be re-claimed with a new code
+ */
+router.delete('/:id', authenticateHuman, async (req, res) => {
+  try {
+    // Verify human owns this agent
+    const { data: agent } = await supabase
+      .from('agents')
+      .select('id, human_id, name')
+      .eq('id', req.params.id)
+      .single();
+
+    if (!agent) {
+      return res.status(404).json({ error: 'Agent not found' });
+    }
+
+    if (agent.human_id !== req.human.id) {
+      return res.status(403).json({ error: 'Not authorized to disconnect this agent' });
+    }
+
+    // Generate new claim code for potential re-claim
+    const newClaimCode = `CLAIM-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+    // Disconnect: set human_id to null, reset claim status, generate new claim code
+    const { error } = await supabase
+      .from('agents')
+      .update({
+        human_id: null,
+        claim_status: 'pending',
+        claim_code: newClaimCode
+      })
+      .eq('id', req.params.id);
+
+    if (error) throw error;
+
+    res.json({ 
+      success: true, 
+      message: `Agent "${agent.name}" disconnected. It can be re-claimed with code: ${newClaimCode}` 
+    });
+
+  } catch (err) {
+    console.error('Disconnect agent error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

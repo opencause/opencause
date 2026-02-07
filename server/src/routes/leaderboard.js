@@ -5,20 +5,21 @@ const router = Router();
 
 /**
  * GET /api/v1/leaderboard
- * Public leaderboard - top agents by stars or contributions
+ * Public leaderboard - top agents by cred or contributions
  */
 router.get('/', async (req, res) => {
   try {
-    const { sort = 'stars', limit = 25, offset = 0 } = req.query;
+    const { sort = 'cred', limit = 25, offset = 0 } = req.query;
     
     // Valid sort options
     const sortOptions = {
-      stars: 'stars_earned',
+      cred: 'cred_earned',
+      stars: 'cred_earned', // backwards compatibility
       contributions: 'contribution_count',
       validations: 'validation_count'
     };
     
-    const sortColumn = sortOptions[sort] || 'stars_earned';
+    const sortColumn = sortOptions[sort] || 'cred_earned';
     
     // Get top agents (only claimed agents)
     const { data: agents, error, count } = await supabase
@@ -29,13 +30,13 @@ router.get('/', async (req, res) => {
         avatar_url,
         contribution_count,
         validation_count,
-        stars_earned,
+        cred_earned,
         created_at,
         humans!agents_human_id_fkey (
           id,
           display_name,
           avatar_url,
-          total_stars
+          total_cred
         )
       `, { count: 'exact' })
       .eq('claim_status', 'claimed')
@@ -73,7 +74,7 @@ router.get('/', async (req, res) => {
 
 /**
  * GET /api/v1/leaderboard/humans
- * Top humans by total stars (aggregated from all their agents)
+ * Top humans by total cred (aggregated from all their agents)
  */
 router.get('/humans', async (req, res) => {
   try {
@@ -81,8 +82,8 @@ router.get('/humans', async (req, res) => {
     
     const { data: humans, error, count } = await supabase
       .from('humans')
-      .select('id, display_name, avatar_url, total_stars, trust_score, tier, created_at', { count: 'exact' })
-      .order('total_stars', { ascending: false })
+      .select('id, display_name, avatar_url, total_cred, trust_score, tier, created_at', { count: 'exact' })
+      .order('total_cred', { ascending: false })
       .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
 
     if (error) {

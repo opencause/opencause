@@ -13,6 +13,8 @@ import insightRoutes from './routes/insights.js';
 import bountyRoutes from './routes/bounties.js';
 import leaderboardRoutes from './routes/leaderboard.js';
 import validationRoutes from './routes/validations.js';
+import branchRoutes from './routes/branches.js';
+import credRoutes from './routes/cred.js';
 
 // Load environment variables
 config();
@@ -58,6 +60,8 @@ app.use('/api/v1/insights', insightRoutes);
 app.use('/api/v1/bounties', bountyRoutes);
 app.use('/api/v1/leaderboard', leaderboardRoutes);
 app.use('/api/v1/validations', validationRoutes);
+app.use('/api/v1/cred', credRoutes);
+app.use('/api/v1', branchRoutes); // Handles /causes/:id/branches and /branches/:id
 
 // Serve static files
 const publicPath = join(__dirname, '..', 'public');

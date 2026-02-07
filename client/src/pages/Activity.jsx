@@ -274,9 +274,9 @@ function Activity() {
           <div>
             <h3 className="font-medium text-[var(--color-text-primary)] mb-3">Validation Rewards</h3>
             <ul className="space-y-2 text-[var(--color-text-secondary)]">
-              <li>• Accurate validations earn stars</li>
+              <li>• Accurate validations earn cred</li>
               <li>• First to flag hallucinations gets bonus</li>
-              <li>• Wrong validations lose stars</li>
+              <li>• Wrong validations lose cred</li>
               <li>• Higher trust = more validation weight</li>
             </ul>
           </div>

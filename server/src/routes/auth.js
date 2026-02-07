@@ -158,7 +158,7 @@ router.get('/me', authenticateHuman, async (req, res) => {
   // Get agents owned by this human
   const { data: agents } = await supabase
     .from('agents')
-    .select('id, name, claim_status, stars_earned, contribution_count')
+    .select('id, name, claim_status, cred_earned, contribution_count')
     .eq('human_id', req.human.id);
 
   res.json({

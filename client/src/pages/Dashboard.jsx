@@ -47,6 +47,9 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [tasksLoading, setTasksLoading] = useState(true);
   
+  // Agent disconnect
+  const [disconnectingAgent, setDisconnectingAgent] = useState(null);
+  
   // Profile editing
   const [editingName, setEditingName] = useState(false);
   const [displayName, setDisplayName] = useState('');
@@ -256,6 +259,39 @@ export default function Dashboard() {
     setAvatarUrl(agent.avatar_url || '');
   };
 
+  const handleDisconnectAgent = async (agent) => {
+    if (!confirm(`Disconnect "${agent.name}"? This will unlink the agent from your account. You'll receive a new claim code if you want to reconnect later.`)) {
+      return;
+    }
+    
+    setDisconnectingAgent(agent.id);
+    try {
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+
+      const res = await fetch(`/api/v1/agents/${agent.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        alert(data.message);
+        fetchAgents();
+      } else {
+        const error = await res.json();
+        alert(error.error || 'Failed to disconnect agent');
+      }
+    } catch (err) {
+      console.error('Failed to disconnect agent:', err);
+      alert('Failed to disconnect agent');
+    } finally {
+      setDisconnectingAgent(null);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending': return 'badge-warning';
@@ -346,9 +382,9 @@ export default function Dashboard() {
               <dd><span className="badge badge-neutral">{human?.tier || 'new'}</span></dd>
             </div>
             <div>
-              <dt className="text-[var(--color-text-muted)]">Total Stars</dt>
+              <dt className="text-[var(--color-text-muted)]">Total Cred</dt>
               <dd className="text-[var(--color-text-primary)] flex items-center gap-1">
-                <StarBadge count={human?.total_stars || 0} />
+                <StarBadge count={human?.total_cred || 0} />
               </dd>
             </div>
           </dl>
@@ -499,15 +535,29 @@ export default function Dashboard() {
                 )}
                 <div className="flex gap-4 text-xs text-[var(--color-text-muted)] mb-3">
                   <span>{agent.contribution_count || 0} contributions</span>
-                  <StarBadge count={agent.stars_earned || 0} />
+                  <StarBadge count={agent.cred_earned || 0} />
                 </div>
-                <button 
-                  onClick={() => openTaskModal(agent)}
-                  className="btn btn-secondary w-full text-sm inline-flex items-center justify-center gap-2"
-                >
-                  <ClipboardDocumentListIcon className="w-4 h-4" />
-                  Request Contribution
-                </button>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => openTaskModal(agent)}
+                    className="btn btn-secondary flex-1 text-sm inline-flex items-center justify-center gap-2"
+                  >
+                    <ClipboardDocumentListIcon className="w-4 h-4" />
+                    Request Contribution
+                  </button>
+                  <button 
+                    onClick={() => handleDisconnectAgent(agent)}
+                    disabled={disconnectingAgent === agent.id}
+                    className="btn btn-secondary text-sm px-3 text-[var(--color-danger)] hover:bg-red-500/10"
+                    title="Disconnect agent"
+                  >
+                    {disconnectingAgent === agent.id ? (
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <XMarkIcon className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -590,9 +640,9 @@ export default function Dashboard() {
           <div className="card p-4 text-center">
             <div className="text-2xl font-bold text-[var(--color-text-primary)] flex items-center justify-center gap-1">
               <StarIcon className="w-5 h-5 text-yellow-400" />
-              {agents.reduce((sum, a) => sum + (a.stars_earned || 0), 0)}
+              {agents.reduce((sum, a) => sum + (a.cred_earned || 0), 0)}
             </div>
-            <div className="text-sm text-[var(--color-text-muted)]">Stars Earned</div>
+            <div className="text-sm text-[var(--color-text-muted)]">Cred Earned</div>
           </div>
         </div>
       )}

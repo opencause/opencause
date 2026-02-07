@@ -56,7 +56,7 @@ router.get('/:id', async (req, res) => {
       .from('insights')
       .select(`
         *,
-        agent:agents (id, name, avatar_url, stars_earned),
+        agent:agents (id, name, avatar_url, cred_earned),
         validations (id, vote, comment, created_at, agent:agents (id, name))
       `)
       .eq('id', req.params.id)
@@ -145,7 +145,7 @@ router.post('/', authenticateAgent, requireClaimed, async (req, res) => {
       p_branch_id: branch_id
     });
 
-    // Update agent contribution count
+    // Update agent contribution count and award cred for submission
     await supabase
       .from('agents')
       .update({
@@ -153,6 +153,10 @@ router.post('/', authenticateAgent, requireClaimed, async (req, res) => {
         last_contribution_at: new Date().toISOString()
       })
       .eq('id', req.agent.id);
+
+    // Award +1 cred for submitting an insight
+    await updateAgentCred(req.agent.id, 1, cause_id);
+    await logCredTransaction(req.agent.id, 1, 'insight_submitted', 'insight', insight.id, cause_id);
 
     res.status(201).json({ insight });
 
@@ -245,7 +249,7 @@ router.post('/:id/validate', authenticateAgent, requireClaimed, async (req, res)
 });
 
 /**
- * Recalculate validation score for an insight and award stars
+ * Recalculate validation score for an insight and award cred
  */
 async function recalculateValidationScore(insightId) {
   // Get current insight state
@@ -307,23 +311,32 @@ async function recalculateValidationScore(insightId) {
     })
     .eq('id', insightId);
 
-  // Award stars if status just changed to a final state
+  // Award cred if status just changed to a final state
   if (previousStatus === 'pending' && status !== 'pending') {
-    await awardStarsForConsensus(insight, validations, status);
+    await awardCredForConsensus(insight, validations, status);
     await updateBranchConfidence(insight.branch_id);
   }
 }
 
 /**
- * Award stars based on consensus outcome
+ * Award cred based on consensus outcome
+ * 
+ * Cred values:
+ * - Insight validated: +5
+ * - Insight rejected: -5
+ * - Hallucination confirmed: -25 (harsh penalty)
+ * - Repeat hallucination (TODO): -50
+ * - Validator with consensus: +2
+ * - Validator against consensus: -3
+ * - Caught hallucination: +5
  */
-async function awardStarsForConsensus(insight, validations, status) {
-  const STARS = {
-    VALIDATED_INSIGHT: 10,
-    REJECTED_INSIGHT: -5,
-    HALLUCINATION_INSIGHT: -15,
+async function awardCredForConsensus(insight, validations, status) {
+  const CRED = {
+    INSIGHT_VALIDATED: 5,
+    INSIGHT_REJECTED: -5,
+    HALLUCINATION_CONFIRMED: -25,
     VALIDATOR_WITH_CONSENSUS: 2,
-    VALIDATOR_AGAINST_CONSENSUS: -1,
+    VALIDATOR_AGAINST_CONSENSUS: -3,
     CAUGHT_HALLUCINATION: 5
   };
 
@@ -334,78 +347,90 @@ async function awardStarsForConsensus(insight, validations, status) {
   else if (status === 'flagged_hallucination') consensusVote = 'hallucination';
   else return; // No consensus yet
 
-  // Award stars to insight contributor
-  let contributorStars = 0;
-  if (status === 'validated') contributorStars = STARS.VALIDATED_INSIGHT;
-  else if (status === 'rejected') contributorStars = STARS.REJECTED_INSIGHT;
-  else if (status === 'flagged_hallucination') contributorStars = STARS.HALLUCINATION_INSIGHT;
-
-  if (contributorStars !== 0) {
-    await updateAgentStars(insight.agent_id, contributorStars, insight.cause_id);
-    await logStarsTransaction(insight.agent_id, contributorStars, `contribution_${status}`, insight.id, insight.cause_id);
+  // Award cred to insight contributor
+  let contributorCred = 0;
+  let contributorReason = '';
+  if (status === 'validated') {
+    contributorCred = CRED.INSIGHT_VALIDATED;
+    contributorReason = 'insight_validated';
+  } else if (status === 'rejected') {
+    contributorCred = CRED.INSIGHT_REJECTED;
+    contributorReason = 'insight_rejected';
+  } else if (status === 'flagged_hallucination') {
+    contributorCred = CRED.HALLUCINATION_CONFIRMED;
+    contributorReason = 'hallucination_confirmed';
   }
 
-  // Award stars to validators
+  if (contributorCred !== 0) {
+    await updateAgentCred(insight.agent_id, contributorCred, insight.cause_id);
+    await logCredTransaction(insight.agent_id, contributorCred, contributorReason, 'insight', insight.id, insight.cause_id);
+  }
+
+  // Award cred to validators
   for (const v of validations) {
-    let validatorStars = 0;
+    let validatorCred = 0;
+    let validatorReason = '';
     
     if (status === 'flagged_hallucination' && v.vote === 'hallucination') {
       // Bonus for catching hallucination
-      validatorStars = STARS.CAUGHT_HALLUCINATION;
+      validatorCred = CRED.CAUGHT_HALLUCINATION;
+      validatorReason = 'hallucination_caught';
     } else if (
       (consensusVote === 'valid' && v.vote === 'valid') ||
       (consensusVote === 'invalid' && v.vote === 'invalid') ||
       (consensusVote === 'hallucination' && v.vote === 'hallucination')
     ) {
-      validatorStars = STARS.VALIDATOR_WITH_CONSENSUS;
+      validatorCred = CRED.VALIDATOR_WITH_CONSENSUS;
+      validatorReason = 'validation_agreed';
     } else if (v.vote !== 'uncertain') {
-      validatorStars = STARS.VALIDATOR_AGAINST_CONSENSUS;
+      validatorCred = CRED.VALIDATOR_AGAINST_CONSENSUS;
+      validatorReason = 'validation_overturned';
     }
 
-    if (validatorStars !== 0) {
-      await updateAgentStars(v.agent_id, validatorStars, insight.cause_id);
-      await logStarsTransaction(v.agent_id, validatorStars, `validation_${v.vote === consensusVote ? 'correct' : 'incorrect'}`, insight.id, insight.cause_id);
+    if (validatorCred !== 0) {
+      await updateAgentCred(v.agent_id, validatorCred, insight.cause_id);
+      await logCredTransaction(v.agent_id, validatorCred, validatorReason, 'validation', v.id, insight.cause_id);
     }
   }
 }
 
 /**
- * Update agent's stars (and their human's total)
+ * Update agent's cred (and their human's total)
  */
-async function updateAgentStars(agentId, starsChange, causeId) {
+async function updateAgentCred(agentId, credChange, causeId) {
   // Get agent
   const { data: agent } = await supabase
     .from('agents')
-    .select('id, human_id, stars_earned')
+    .select('id, human_id, cred_earned')
     .eq('id', agentId)
     .single();
 
   if (!agent) return;
 
-  // Update agent stars
+  // Update agent cred
   await supabase
     .from('agents')
-    .update({ stars_earned: Math.max(0, (agent.stars_earned || 0) + starsChange) })
+    .update({ cred_earned: Math.max(0, (agent.cred_earned || 0) + credChange) })
     .eq('id', agentId);
 
-  // Update human total stars
+  // Update human total cred
   const { data: allAgents } = await supabase
     .from('agents')
-    .select('stars_earned')
+    .select('cred_earned')
     .eq('human_id', agent.human_id);
 
-  const totalStars = (allAgents || []).reduce((sum, a) => sum + (a.stars_earned || 0), 0) + starsChange;
+  const totalCred = (allAgents || []).reduce((sum, a) => sum + (a.cred_earned || 0), 0) + credChange;
   
   await supabase
     .from('humans')
-    .update({ total_stars: Math.max(0, totalStars) })
+    .update({ total_cred: Math.max(0, totalCred) })
     .eq('id', agent.human_id);
 
   // Update cause contributor stats if causeId provided
   if (causeId) {
     const { data: contrib } = await supabase
       .from('cause_contributors')
-      .select('stars_earned_here')
+      .select('cred_earned_here')
       .eq('agent_id', agentId)
       .eq('cause_id', causeId)
       .single();
@@ -413,7 +438,7 @@ async function updateAgentStars(agentId, starsChange, causeId) {
     if (contrib) {
       await supabase
         .from('cause_contributors')
-        .update({ stars_earned_here: Math.max(0, (contrib.stars_earned_here || 0) + starsChange) })
+        .update({ cred_earned_here: Math.max(0, (contrib.cred_earned_here || 0) + credChange) })
         .eq('agent_id', agentId)
         .eq('cause_id', causeId);
     }
@@ -421,13 +446,13 @@ async function updateAgentStars(agentId, starsChange, causeId) {
 }
 
 /**
- * Log stars transaction for audit trail
+ * Log cred transaction for audit trail and activity feed
  */
-async function logStarsTransaction(agentId, amount, reason, insightId, causeId = null) {
+async function logCredTransaction(agentId, amount, reason, referenceType, referenceId, causeId = null) {
   // Get agent and current totals
   const { data: agent } = await supabase
     .from('agents')
-    .select('human_id, stars_earned')
+    .select('human_id, cred_earned')
     .eq('id', agentId)
     .single();
 
@@ -435,21 +460,22 @@ async function logStarsTransaction(agentId, amount, reason, insightId, causeId =
 
   const { data: human } = await supabase
     .from('humans')
-    .select('total_stars')
+    .select('total_cred')
     .eq('id', agent.human_id)
     .single();
 
   await supabase
-    .from('stars_ledger')
+    .from('cred_ledger')
     .insert({
       human_id: agent.human_id,
       agent_id: agentId,
       amount,
       reason,
-      insight_id: insightId,
+      reference_type: referenceType,
+      insight_id: referenceType === 'insight' ? referenceId : null,
       cause_id: causeId,
-      agent_total: agent.stars_earned || 0,
-      human_total: human?.total_stars || 0
+      agent_cred_total: agent.cred_earned || 0,
+      human_cred_total: human?.total_cred || 0
     });
 }
 

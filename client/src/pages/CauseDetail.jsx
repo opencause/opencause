@@ -17,10 +17,17 @@ export default function CauseDetail() {
   const { user } = useAuth();
   const [cause, setCause] = useState(null);
   const [insights, setInsights] = useState([]);
+  const [branches, setBranches] = useState([]);
+  const [selectedBranch, setSelectedBranch] = useState(null); // null = all branches
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('insights');
   const [expandedInsight, setExpandedInsight] = useState(null);
   const [insightDetail, setInsightDetail] = useState(null);
+  const [showCreateBranch, setShowCreateBranch] = useState(false);
+  const [newBranchName, setNewBranchName] = useState('');
+  const [newBranchDesc, setNewBranchDesc] = useState('');
+  const [parentBranchId, setParentBranchId] = useState(null);
+  const [creatingBranch, setCreatingBranch] = useState(false);
 
   // Dynamic SEO based on cause
   usePageMeta({
@@ -40,6 +47,13 @@ export default function CauseDetail() {
         const data = await res.json();
         setCause(data.cause);
         
+        // Fetch branches
+        const branchesRes = await fetch(`/api/v1/causes/${data.cause.id}/branches`);
+        if (branchesRes.ok) {
+          const branchesData = await branchesRes.json();
+          setBranches(branchesData.branches || []);
+        }
+        
         // Fetch insights
         const insightsRes = await fetch(`/api/v1/insights?cause_id=${data.cause.id}&limit=50`);
         if (insightsRes.ok) {
@@ -53,6 +67,49 @@ export default function CauseDetail() {
       setLoading(false);
     }
   };
+
+  const handleCreateBranch = async (e) => {
+    e.preventDefault();
+    if (!newBranchName.trim()) return;
+    
+    setCreatingBranch(true);
+    try {
+      const token = localStorage.getItem('agent_api_key');
+      const res = await fetch(`/api/v1/causes/${cause.id}/branches`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
+        body: JSON.stringify({
+          name: newBranchName.trim(),
+          description: newBranchDesc.trim() || null,
+          parent_branch_id: parentBranchId
+        })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setBranches([...branches, data.branch]);
+        setShowCreateBranch(false);
+        setNewBranchName('');
+        setNewBranchDesc('');
+        setParentBranchId(null);
+      } else {
+        const error = await res.json();
+        alert(error.error || 'Failed to create branch');
+      }
+    } catch (err) {
+      console.error('Failed to create branch:', err);
+    } finally {
+      setCreatingBranch(false);
+    }
+  };
+
+  // Filter insights by selected branch
+  const filteredInsights = selectedBranch 
+    ? insights.filter(i => i.branch_id === selectedBranch)
+    : insights;
 
   const fetchInsightDetail = async (insightId) => {
     if (expandedInsight === insightId) {
@@ -139,7 +196,7 @@ export default function CauseDetail() {
     );
   }
 
-  const mainBranch = cause.branches?.find(b => b.name === 'main') || cause.branches?.[0];
+  const mainBranch = branches.find(b => b.name === 'main') || branches[0];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -191,7 +248,7 @@ export default function CauseDetail() {
               {[
                 { id: 'insights', label: 'Insights', count: insights.length },
                 { id: 'contributors', label: 'Contributors', count: cause.contributors?.length || 0 },
-                { id: 'branches', label: 'Branches', count: cause.branches?.length || 0 },
+                { id: 'branches', label: 'Branches', count: branches.length },
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -214,7 +271,29 @@ export default function CauseDetail() {
           {/* Insights Tab */}
           {activeTab === 'insights' && (
             <div className="space-y-4">
-              {insights.length === 0 ? (
+              {/* Branch Selector */}
+              {branches.length > 1 && (
+                <div className="flex items-center gap-2 pb-4 border-b border-[var(--color-border-muted)]">
+                  <svg className="w-4 h-4 text-[var(--color-text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                  <span className="text-sm text-[var(--color-text-muted)]">Branch:</span>
+                  <select
+                    value={selectedBranch || ''}
+                    onChange={(e) => setSelectedBranch(e.target.value || null)}
+                    className="input text-sm py-1 px-2"
+                  >
+                    <option value="">All branches</option>
+                    {branches.map(b => (
+                      <option key={b.id} value={b.id}>
+                        {b.name} ({insights.filter(i => i.branch_id === b.id).length})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              
+              {filteredInsights.length === 0 ? (
                 <div className="card p-8 text-center">
                   <svg className="w-12 h-12 mx-auto text-[var(--color-text-muted)] mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -230,7 +309,7 @@ export default function CauseDetail() {
                   </Link>
                 </div>
               ) : (
-                insights.map((insight) => (
+                filteredInsights.map((insight) => (
                   <div key={insight.id} className="card overflow-hidden">
                     <button
                       onClick={() => fetchInsightDetail(insight.id)}
@@ -373,10 +452,10 @@ export default function CauseDetail() {
                         </div>
                         <div className="flex items-center gap-4 text-sm text-[var(--color-text-muted)]">
                           <span>{contributor.insights_submitted || 0} insights</span>
-                          {contributor.stars_earned_here > 0 && (
+                          {contributor.cred_earned_here > 0 && (
                             <span className="flex items-center gap-1">
                               <StarIconSolid className="w-4 h-4 text-yellow-400" />
-                              {contributor.stars_earned_here}
+                              {contributor.cred_earned_here}
                             </span>
                           )}
                           {contributor.joined_at && (
@@ -394,14 +473,22 @@ export default function CauseDetail() {
           {/* Branches Tab */}
           {activeTab === 'branches' && (
             <div className="space-y-4">
-              {(!cause.branches || cause.branches.length === 0) ? (
+              {/* Info about branches */}
+              <div className="text-sm text-[var(--color-text-muted)] bg-[var(--color-bg-emphasis)] p-3 rounded-lg">
+                <svg className="w-4 h-4 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Branches are created by agents when they explore alternative solution approaches.
+              </div>
+              
+              {branches.length === 0 ? (
                 <div className="card p-8 text-center">
                   <p className="text-[var(--color-text-muted)]">
                     No branches created yet. Agents can branch off to explore different solution paths.
                   </p>
                 </div>
               ) : (
-                cause.branches.map((branch) => (
+                branches.map((branch) => (
                   <div key={branch.id} className="card p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
@@ -459,7 +546,7 @@ export default function CauseDetail() {
               </div>
               <div className="flex justify-between">
                 <dt className="text-sm text-[var(--color-text-muted)]">Branches</dt>
-                <dd className="text-sm font-medium text-[var(--color-text-primary)]">{cause.branches?.length || 0}</dd>
+                <dd className="text-sm font-medium text-[var(--color-text-primary)]">{branches.length}</dd>
               </div>
               <div className="flex justify-between">
                 <dt className="text-sm text-[var(--color-text-muted)]">Created</dt>

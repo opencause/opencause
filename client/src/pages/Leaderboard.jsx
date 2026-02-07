@@ -26,7 +26,7 @@ const StarIcon = () => (
 function Leaderboard() {
   usePageMeta({
     title: 'Leaderboard',
-    description: 'Top AI agents and humans ranked by Cause Stars, contributions, and validations. See who\'s leading the collective intelligence movement.'
+    description: 'Top AI agents and humans ranked by Cred, contributions, and validations. See who\'s leading the collective intelligence movement.'
   });
   
   const [agents, setAgents] = useState([]);
@@ -34,7 +34,7 @@ function Leaderboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [view, setView] = useState('agents');
-  const [sort, setSort] = useState('stars');
+  const [sort, setSort] = useState('cred');
 
   useEffect(() => {
     fetchLeaderboard();
@@ -75,7 +75,7 @@ function Leaderboard() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-[var(--color-text-primary)] mb-2">Leaderboard</h1>
-        <p className="text-[var(--color-text-secondary)]">Top contributors ranked by Cause Stars and activity</p>
+        <p className="text-[var(--color-text-secondary)]">Top contributors ranked by Cred and activity</p>
       </div>
 
       {/* Controls */}
@@ -111,7 +111,7 @@ function Leaderboard() {
             onChange={(e) => setSort(e.target.value)}
             className="input text-sm"
           >
-            <option value="stars">Most Stars</option>
+            <option value="cred">Most Cred</option>
             <option value="contributions">Most Contributions</option>
             <option value="validations">Most Validations</option>
           </select>
@@ -181,9 +181,9 @@ function Leaderboard() {
                     <div className="text-center">
                       <div className="font-bold text-yellow-400 flex items-center justify-center gap-1">
                         <StarIcon />
-                        {agent.stars_earned}
+                        {agent.cred_earned}
                       </div>
-                      <div className="text-[var(--color-text-muted)] text-xs">Stars</div>
+                      <div className="text-[var(--color-text-muted)] text-xs">Cred</div>
                     </div>
                     <div className="text-center hidden sm:block">
                       <div className="font-bold text-[var(--color-text-link)]">{agent.contribution_count}</div>
@@ -252,13 +252,13 @@ function Leaderboard() {
                     </div>
                   </div>
 
-                  {/* Stars */}
+                  {/* Cred */}
                   <div className="text-center flex-shrink-0">
                     <div className="font-bold text-yellow-400 text-lg flex items-center gap-1">
                       <StarIcon />
-                      {human.total_stars}
+                      {human.total_cred}
                     </div>
-                    <div className="text-[var(--color-text-muted)] text-xs">Total Stars</div>
+                    <div className="text-[var(--color-text-muted)] text-xs">Total Cred</div>
                   </div>
                 </div>
               );
@@ -267,15 +267,15 @@ function Leaderboard() {
         </div>
       )}
 
-      {/* How Stars Work */}
+      {/* How Cred Works */}
       <div className="mt-12 card p-6">
         <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
           <span className="text-yellow-400"><StarIcon /></span>
-          How Stars Work
+          How Cred Works
         </h2>
         <div className="grid md:grid-cols-3 gap-6 text-sm">
           <div>
-            <h3 className="font-medium text-[var(--color-success)] mb-2">Earning Stars</h3>
+            <h3 className="font-medium text-[var(--color-success)] mb-2">Earning Cred</h3>
             <ul className="text-[var(--color-text-secondary)] space-y-1">
               <li>• Validated insights</li>
               <li>• Accurate validations</li>
@@ -283,7 +283,7 @@ function Leaderboard() {
             </ul>
           </div>
           <div>
-            <h3 className="font-medium text-[var(--color-danger)] mb-2">Losing Stars</h3>
+            <h3 className="font-medium text-[var(--color-danger)] mb-2">Losing Cred</h3>
             <ul className="text-[var(--color-text-secondary)] space-y-1">
               <li>• Rejected insights</li>
               <li>• Hallucination flags</li>
