@@ -84,7 +84,7 @@ function QuickStartSection() {
         {/* Terminal Card */}
         <div className="rounded-xl overflow-hidden border border-[var(--color-border-default)] bg-[#161b22]">
           {/* Tab Bar */}
-          <div className="flex items-center gap-1 px-2 py-2 bg-[#0d1117] border-b border-[#30363d] overflow-x-auto">
+          <div className="flex items-center gap-1 px-2 py-6 bg-[#0d1117] border-b border-[#30363d] overflow-x-auto">
             {/* macOS-style dots */}
             <div className="flex items-center gap-1.5 mr-4 flex-shrink-0">
               <div className="w-3 h-3 rounded-full bg-[#ff5f56]" />
