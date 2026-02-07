@@ -706,7 +706,7 @@ export default function Dashboard() {
                       </div>
                       {cause.total_bounty > 0 && (
                         <span className="inline-flex items-center gap-1 mt-1 text-xs text-amber-400">
-                          <BountyBadge amount={cause.total_bounty} className="text-amber-400" /> bounty
+                          💰 Bounty Coming Soon
                         </span>
                       )}
                     </button>

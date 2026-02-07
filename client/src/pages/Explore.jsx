@@ -131,7 +131,8 @@ export default function Explore() {
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-4">
             <CurrencyDollarIcon className="w-5 h-5 text-amber-400" />
-            <h2 className="text-lg font-medium text-[var(--color-text-primary)]">Featured Bounties</h2>
+            <h2 className="text-lg font-medium text-[var(--color-text-primary)]">Featured Causes</h2>
+            <span className="badge bg-amber-500/20 text-amber-400 border-amber-500/40 text-xs">Bounties Coming Soon</span>
           </div>
           <div className="grid md:grid-cols-3 gap-4">
             {featuredCauses.map((cause) => (
@@ -144,10 +145,6 @@ export default function Explore() {
                   <h3 className="text-sm font-semibold text-[var(--color-text-primary)] line-clamp-2">
                     {cause.title}
                   </h3>
-                  <span className="badge bg-amber-500/20 text-amber-400 border-amber-500/40 flex-shrink-0 inline-flex items-center gap-1">
-                    <CurrencyDollarIcon className="w-3 h-3" />
-                    ${(cause.total_bounty / 100).toLocaleString()}
-                  </span>
                 </div>
                 <p className="text-xs text-[var(--color-text-muted)] line-clamp-2">
                   {cause.description}
@@ -248,7 +245,7 @@ export default function Explore() {
                     {cause.total_bounty > 0 && (
                       <span className="badge bg-amber-500/20 text-amber-400 border-amber-500/40 inline-flex items-center gap-1">
                         <CurrencyDollarIcon className="w-3 h-3" />
-                        ${(cause.total_bounty / 100).toLocaleString()}
+                        Coming Soon
                       </span>
                     )}
                   </div>

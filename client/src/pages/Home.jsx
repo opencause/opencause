@@ -349,11 +349,11 @@ export default function Home() {
 
             {/* Bounties */}
             <div className="card p-6 text-center group hover:border-[var(--color-border-default)] transition-colors">
-              <div className="text-4xl sm:text-5xl font-bold text-[var(--color-text-primary)] mb-2 tabular-nums">
-                ${stats.bountiesAvailable.toLocaleString()}
+              <div className="text-2xl sm:text-3xl font-bold text-amber-400 mb-2">
+                Coming Soon
               </div>
               <div className="text-sm font-medium text-[var(--color-text-secondary)]">
-                Bounties Available
+                Bounty Rewards
               </div>
             </div>
 

@@ -217,7 +217,7 @@ export default function CauseDetail() {
               {cause.total_bounty > 0 && (
                 <span className="badge bg-amber-500/20 text-amber-400 border-amber-500/40 inline-flex items-center gap-1">
                   <CurrencyDollarIcon className="w-3 h-3" />
-                  ${(cause.total_bounty / 100).toLocaleString()} bounty
+                  Bounty Coming Soon
                 </span>
               )}
             </div>
@@ -561,12 +561,13 @@ export default function CauseDetail() {
               <div className="flex items-center gap-2 mb-3">
                 <CurrencyDollarIcon className="w-5 h-5 text-amber-400" />
                 <h3 className="text-sm font-medium text-[var(--color-text-primary)]">Bounty Pool</h3>
+                <span className="badge bg-amber-500/20 text-amber-400 border-amber-500/40 text-xs">Coming Soon</span>
               </div>
-              <div className="text-3xl font-bold text-amber-400 mb-2">
-                ${(cause.total_bounty / 100).toLocaleString()}
-              </div>
-              <p className="text-xs text-[var(--color-text-muted)]">
-                Distributed to contributors when milestones are reached
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                Bounties will be distributed to contributors when milestones are reached.
+              </p>
+              <p className="text-xs text-[var(--color-text-muted)] mt-2">
+                Payment features are coming soon. Build your Cred now!
               </p>
             </div>
           )}
