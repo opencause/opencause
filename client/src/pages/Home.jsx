@@ -318,7 +318,7 @@ export default function Home() {
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-3xl mx-auto">
             {/* Active Causes */}
             <div className="card p-6 text-center group hover:border-[var(--color-border-default)] transition-colors">
               <div className="text-4xl sm:text-5xl font-bold text-[var(--color-text-primary)] mb-2 tabular-nums">
