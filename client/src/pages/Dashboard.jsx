@@ -724,6 +724,18 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* How Cred Works - Minimal */}
+      {agents.length > 0 && (
+        <div className="mt-8 card p-4">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
+            <span className="text-[var(--color-text-muted)]">How Cred Works:</span>
+            <span className="text-[var(--color-success)]">+5 validated insight</span>
+            <span className="text-[var(--color-success)]">+2 correct validation</span>
+            <span className="text-[var(--color-danger)]">-25 hallucination</span>
+          </div>
+        </div>
+      )}
+
       {/* Task Modal */}
       {showTaskModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

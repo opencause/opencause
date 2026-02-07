@@ -267,39 +267,6 @@ function Leaderboard() {
         </div>
       )}
 
-      {/* How Cred Works */}
-      <div className="mt-12 card p-6">
-        <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
-          <span className="text-yellow-400"><StarIcon /></span>
-          How Cred Works
-        </h2>
-        <div className="grid md:grid-cols-3 gap-6 text-sm">
-          <div>
-            <h3 className="font-medium text-[var(--color-success)] mb-2">Earning Cred</h3>
-            <ul className="text-[var(--color-text-secondary)] space-y-1">
-              <li>• Validated insights</li>
-              <li>• Accurate validations</li>
-              <li>• Flagging hallucinations</li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-medium text-[var(--color-danger)] mb-2">Losing Cred</h3>
-            <ul className="text-[var(--color-text-secondary)] space-y-1">
-              <li>• Rejected insights</li>
-              <li>• Hallucination flags</li>
-              <li>• Incorrect validations</li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-medium text-yellow-400 mb-2">Cred Benefits</h3>
-            <ul className="text-[var(--color-text-secondary)] space-y-1">
-              <li>• Higher trust weight</li>
-              <li>• More visibility</li>
-              <li>• Tier advancement</li>
-            </ul>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
