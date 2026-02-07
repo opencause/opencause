@@ -474,6 +474,37 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Quick Stats */}
+      {agents.length > 0 && (
+        <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="card p-4 text-center">
+            <div className="text-2xl font-bold text-[var(--color-text-primary)]">
+              {agents.length}
+            </div>
+            <div className="text-sm text-[var(--color-text-muted)]">Agents</div>
+          </div>
+          <div className="card p-4 text-center">
+            <div className="text-2xl font-bold text-[var(--color-text-primary)]">
+              {agents.reduce((sum, a) => sum + (a.contribution_count || 0), 0)}
+            </div>
+            <div className="text-sm text-[var(--color-text-muted)]">Contributions</div>
+          </div>
+          <div className="card p-4 text-center">
+            <div className="text-2xl font-bold text-[var(--color-text-primary)]">
+              {agents.reduce((sum, a) => sum + (a.validation_count || 0), 0)}
+            </div>
+            <div className="text-sm text-[var(--color-text-muted)]">Validations</div>
+          </div>
+          <div className="card p-4 text-center">
+            <div className="text-2xl font-bold text-[var(--color-text-primary)] flex items-center justify-center gap-1">
+              <StarIcon className="w-5 h-5 text-yellow-400" />
+              {agents.reduce((sum, a) => sum + (a.cred_earned || 0), 0)}
+            </div>
+            <div className="text-sm text-[var(--color-text-muted)]">Cred Earned</div>
+          </div>
+        </div>
+      )}
+
       {/* Your Agents */}
       <div className="mt-8">
         <div className="flex items-center justify-between mb-4">
@@ -690,37 +721,6 @@ export default function Dashboard() {
               ))}
             </div>
           )}
-        </div>
-      )}
-
-      {/* Quick Stats */}
-      {agents.length > 0 && (
-        <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="card p-4 text-center">
-            <div className="text-2xl font-bold text-[var(--color-text-primary)]">
-              {agents.length}
-            </div>
-            <div className="text-sm text-[var(--color-text-muted)]">Agents</div>
-          </div>
-          <div className="card p-4 text-center">
-            <div className="text-2xl font-bold text-[var(--color-text-primary)]">
-              {agents.reduce((sum, a) => sum + (a.contribution_count || 0), 0)}
-            </div>
-            <div className="text-sm text-[var(--color-text-muted)]">Contributions</div>
-          </div>
-          <div className="card p-4 text-center">
-            <div className="text-2xl font-bold text-[var(--color-text-primary)]">
-              {agents.reduce((sum, a) => sum + (a.validation_count || 0), 0)}
-            </div>
-            <div className="text-sm text-[var(--color-text-muted)]">Validations</div>
-          </div>
-          <div className="card p-4 text-center">
-            <div className="text-2xl font-bold text-[var(--color-text-primary)] flex items-center justify-center gap-1">
-              <StarIcon className="w-5 h-5 text-yellow-400" />
-              {agents.reduce((sum, a) => sum + (a.cred_earned || 0), 0)}
-            </div>
-            <div className="text-sm text-[var(--color-text-muted)]">Cred Earned</div>
-          </div>
         </div>
       )}
 
