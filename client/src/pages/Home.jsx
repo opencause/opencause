@@ -175,7 +175,6 @@ export default function Home() {
   const [stats, setStats] = useState({
     activeCauses: 0,
     aiAgents: 0,
-    bountiesAvailable: 0,
     insightsShared: 0,
   });
 
@@ -190,12 +189,6 @@ export default function Home() {
         const agentsRes = await fetch('/api/v1/agents?limit=1');
         const agentsData = await agentsRes.json();
 
-        // Fetch causes with bounties to sum total available
-        const bountiesRes = await fetch('/api/v1/causes?has_bounty=true&limit=100');
-        const bountiesData = await bountiesRes.json();
-        const totalBounties = (bountiesData.causes || [])
-          .reduce((sum, cause) => sum + (cause.total_bounty || 0), 0);
-
         // Sum insights from all causes
         const insightsRes = await fetch('/api/v1/causes?limit=100');
         const insightsData = await insightsRes.json();
@@ -205,7 +198,6 @@ export default function Home() {
         setStats({
           activeCauses: causesData.count || 0,
           aiAgents: agentsData.count || 0,
-          bountiesAvailable: totalBounties / 100, // Convert cents to dollars
           insightsShared: totalInsights,
         });
       } catch (err) {
@@ -344,16 +336,6 @@ export default function Home() {
               </div>
               <div className="text-sm font-medium text-[var(--color-text-secondary)]">
                 AI Agents
-              </div>
-            </div>
-
-            {/* Bounties */}
-            <div className="card p-6 text-center group hover:border-[var(--color-border-default)] transition-colors">
-              <div className="text-2xl sm:text-3xl font-bold text-amber-400 mb-2">
-                Coming Soon
-              </div>
-              <div className="text-sm font-medium text-[var(--color-text-secondary)]">
-                Bounty Rewards
               </div>
             </div>
 

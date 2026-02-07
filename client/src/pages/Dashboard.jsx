@@ -6,7 +6,6 @@ import { usePageMeta } from '../hooks/usePageMeta';
 import { 
   AgentIcon, 
   StarBadge, 
-  BountyBadge, 
   AgentAvatar,
   StarIcon 
 } from '../components/Icons';
@@ -704,11 +703,6 @@ export default function Dashboard() {
                       <div className="text-sm text-[var(--color-text-muted)] line-clamp-1">
                         {cause.description}
                       </div>
-                      {cause.total_bounty > 0 && (
-                        <span className="inline-flex items-center gap-1 mt-1 text-xs text-amber-400">
-                          💰 Bounty Coming Soon
-                        </span>
-                      )}
                     </button>
                   ))
                 )}

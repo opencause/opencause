@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { CurrencyDollarIcon } from '@heroicons/react/24/outline';
 import { usePageMeta } from '../hooks/usePageMeta';
 
 // SEO
@@ -28,7 +27,6 @@ export default function Explore() {
   const searchQuery = searchParams.get('q') || '';
   
   const [causes, setCauses] = useState([]);
-  const [featuredCauses, setFeaturedCauses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [category, setCategory] = useState('all');
@@ -37,25 +35,6 @@ export default function Explore() {
   useEffect(() => {
     fetchCauses();
   }, [filter, category, sort, searchQuery]);
-
-  // Fetch featured causes (with bounties) on initial load
-  useEffect(() => {
-    if (!searchQuery) {
-      fetchFeaturedCauses();
-    }
-  }, []);
-
-  const fetchFeaturedCauses = async () => {
-    try {
-      const res = await fetch('/api/v1/causes?sort=bounty&limit=3&has_bounty=true');
-      if (res.ok) {
-        const data = await res.json();
-        setFeaturedCauses(data.causes || []);
-      }
-    } catch (err) {
-      console.error('Failed to fetch featured causes:', err);
-    }
-  };
 
   const fetchCauses = async () => {
     setLoading(true);
@@ -126,39 +105,6 @@ export default function Explore() {
         </Link>
       </div>
 
-      {/* Featured Causes - Only show when not searching */}
-      {!searchQuery && featuredCauses.length > 0 && (
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <CurrencyDollarIcon className="w-5 h-5 text-amber-400" />
-            <h2 className="text-lg font-medium text-[var(--color-text-primary)]">Featured Causes</h2>
-            <span className="badge bg-amber-500/20 text-amber-400 border-amber-500/40 text-xs">Bounties Coming Soon</span>
-          </div>
-          <div className="grid md:grid-cols-3 gap-4">
-            {featuredCauses.map((cause) => (
-              <Link 
-                key={cause.id} 
-                to={`/causes/${cause.slug}`}
-                className="card p-4 border-amber-500/30 hover:border-amber-500/60 hover:bg-[var(--color-bg-emphasis)] transition-all duration-150"
-              >
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <h3 className="text-sm font-semibold text-[var(--color-text-primary)] line-clamp-2">
-                    {cause.title}
-                  </h3>
-                </div>
-                <p className="text-xs text-[var(--color-text-muted)] line-clamp-2">
-                  {cause.description}
-                </p>
-                <div className="flex items-center gap-3 mt-3 text-xs text-[var(--color-text-muted)]">
-                  <span>{cause.contributor_count} contributors</span>
-                  <span>{cause.insight_count} insights</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Filters */}
       <div className="flex flex-col sm:flex-row flex-wrap gap-4 mb-6">
         <div className="flex items-center gap-2">
@@ -195,7 +141,6 @@ export default function Explore() {
             className="input text-sm py-1"
           >
             <option value="newest">Newest</option>
-            <option value="bounty">Highest Bounty</option>
             <option value="popular">Most Contributors</option>
             <option value="active">Recently Active</option>
           </select>
@@ -242,12 +187,6 @@ export default function Explore() {
                       {cause.title}
                     </h3>
                     {getStatusBadge(cause.status)}
-                    {cause.total_bounty > 0 && (
-                      <span className="badge bg-amber-500/20 text-amber-400 border-amber-500/40 inline-flex items-center gap-1">
-                        <CurrencyDollarIcon className="w-3 h-3" />
-                        Coming Soon
-                      </span>
-                    )}
                   </div>
                   
                   <p className="text-sm text-[var(--color-text-secondary)] line-clamp-2 mb-3">

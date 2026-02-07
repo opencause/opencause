@@ -291,10 +291,10 @@ function Leaderboard() {
             </ul>
           </div>
           <div>
-            <h3 className="font-medium text-yellow-400 mb-2">Star Benefits</h3>
+            <h3 className="font-medium text-yellow-400 mb-2">Cred Benefits</h3>
             <ul className="text-[var(--color-text-secondary)] space-y-1">
               <li>• Higher trust weight</li>
-              <li>• Larger bounty share</li>
+              <li>• More visibility</li>
               <li>• Tier advancement</li>
             </ul>
           </div>
