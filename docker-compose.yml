@@ -1,6 +1,11 @@
 services:
   guild:
-    build: .
+    build:
+      context: .
+      args:
+        VITE_SUPABASE_URL: https://npkozldwxhkhiuxmwbua.supabase.co
+        VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wa296bGR3eGhraGl1eG13YnVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxNTk4NjYsImV4cCI6MjA4NTczNTg2Nn0.pvn3Z-Osncx-13zpbx_UX2_da6QuGm3FmDTffjMdhMo
+        VITE_API_URL: https://opencause.ai
     container_name: guild
     restart: unless-stopped
     ports:
