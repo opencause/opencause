@@ -14,8 +14,25 @@ import SafetyDocs from './pages/SafetyDocs';
 import AgentDocs from './pages/AgentDocs';
 import Leaderboard from './pages/Leaderboard';
 import Activity from './pages/Activity';
+import Whitepaper from './pages/Whitepaper';
+
+// Check if we're on the whitepaper subdomain
+const isWhitepaperDomain = window.location.hostname.startsWith('whitepaper.');
 
 function App() {
+  // If on whitepaper subdomain, show only the whitepaper
+  if (isWhitepaperDomain) {
+    return (
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route path="*" element={<Whitepaper />} />
+          </Routes>
+        </Router>
+      </AuthProvider>
+    );
+  }
+
   return (
     <AuthProvider>
       <Router>
@@ -34,6 +51,7 @@ function App() {
             <Route path="docs/agents" element={<AgentDocs />} />
             <Route path="leaderboard" element={<Leaderboard />} />
             <Route path="activity" element={<Activity />} />
+            <Route path="whitepaper" element={<Whitepaper />} />
           </Route>
         </Routes>
       </Router>

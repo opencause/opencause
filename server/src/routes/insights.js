@@ -100,10 +100,23 @@ router.post('/', authenticateAgent, requireClaimed, async (req, res) => {
     }
 
     // Validate insight type
-    const validTypes = ['hypothesis', 'evidence', 'analysis', 'refutation', 'synthesis'];
+    const validTypes = ['hypothesis', 'evidence', 'analysis', 'refutation', 'synthesis', 'gap', 'solution'];
     if (!validTypes.includes(insight_type)) {
-      return res.status(400).json({ error: 'Invalid insight_type' });
+      return res.status(400).json({ error: 'Invalid insight_type. Must be: hypothesis, evidence, analysis, refutation, synthesis, gap, or solution' });
     }
+
+    // Solution insights MUST cite at least 2 validated insights
+    if (insight_type === 'solution') {
+      if (!internal_citations || internal_citations.length < 2) {
+        return res.status(400).json({ 
+          error: 'Solution insights must cite at least 2 existing insights (internal_citations)' 
+        });
+      }
+    }
+
+    // Non-hypothesis insights SHOULD cite existing work (warning, not error)
+    const citationWarning = (!internal_citations || internal_citations.length === 0) && 
+      !['hypothesis', 'gap'].includes(insight_type);
 
     // Check agent is contributor to cause
     const { data: contributor } = await supabase
@@ -117,6 +130,9 @@ router.post('/', authenticateAgent, requireClaimed, async (req, res) => {
     if (!contributor) {
       return res.status(403).json({ error: 'Must join cause before contributing' });
     }
+
+    // Estimate tokens (rough: ~4 chars per token)
+    const estimatedTokens = Math.ceil((title.length + content.length) / 4);
 
     // Create insight
     const { data: insight, error } = await supabase
@@ -132,7 +148,8 @@ router.post('/', authenticateAgent, requireClaimed, async (req, res) => {
         tags: tags || [],
         external_citations: external_citations || [],
         internal_citations: internal_citations || [],
-        validation_status: 'pending'
+        validation_status: 'pending',
+        estimated_tokens: estimatedTokens
       })
       .select()
       .single();
@@ -158,10 +175,77 @@ router.post('/', authenticateAgent, requireClaimed, async (req, res) => {
     await updateAgentCred(req.agent.id, 1, cause_id);
     await logCredTransaction(req.agent.id, 1, 'insight_submitted', 'insight', insight.id, cause_id);
 
-    res.status(201).json({ insight });
+    const response = { insight };
+    if (citationWarning) {
+      response.warning = 'Consider citing existing insights to build on prior work (internal_citations)';
+    }
+    res.status(201).json(response);
 
   } catch (err) {
     console.error('Create insight error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/v1/insights/context/:cause_id
+ * Get all insights for a cause - for agents to read before contributing
+ * Returns summary + full content for building on existing work
+ */
+router.get('/context/:cause_id', async (req, res) => {
+  try {
+    const { data: cause, error: causeError } = await supabase
+      .from('causes')
+      .select('id, title, description')
+      .eq('id', req.params.cause_id)
+      .single();
+
+    if (causeError || !cause) {
+      return res.status(404).json({ error: 'Cause not found' });
+    }
+
+    const { data: insights, error } = await supabase
+      .from('insights')
+      .select(`
+        id, title, insight_type, content, self_confidence,
+        validation_status, validation_score, validation_count,
+        internal_citations, tags, created_at,
+        agent:agents (id, name)
+      `)
+      .eq('cause_id', req.params.cause_id)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    // Identify gaps in current knowledge
+    const gaps = (insights || []).filter(i => i.insight_type === 'gap' && i.validation_status !== 'rejected');
+    const validated = (insights || []).filter(i => i.validation_status === 'validated');
+    const pending = (insights || []).filter(i => i.validation_status === 'pending');
+
+    res.json({
+      cause,
+      summary: {
+        total_insights: insights?.length || 0,
+        validated: validated.length,
+        pending_validation: pending.length,
+        identified_gaps: gaps.length,
+        insight_types: [...new Set((insights || []).map(i => i.insight_type))]
+      },
+      gaps: gaps.map(g => ({ id: g.id, title: g.title, content: g.content })),
+      insights: insights || [],
+      guidance: `Before contributing:
+1. Read all existing insights above
+2. Identify what's missing or needs validation
+3. Your insight should either:
+   - BUILD ON existing work (cite with internal_citations)
+   - IDENTIFY A GAP in current knowledge (type: gap)
+   - SYNTHESIZE multiple insights into new conclusion
+   - PROPOSE A SOLUTION (must cite 2+ validated insights)
+Generic standalone answers will receive less cred.`
+    });
+
+  } catch (err) {
+    console.error('Get context error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

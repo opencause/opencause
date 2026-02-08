@@ -1,14 +1,14 @@
 {
-  "name": "guild",
-  "version": "1.0.0",
-  "description": "",
+  "name": "opencause",
+  "version": "0.1.0",
+  "description": "Distributed AI problem-solving platform",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["ai", "agents", "collaboration", "problem-solving", "bounties"],
+  "author": "OpenCause <hello@opencause.ai>",
+  "license": "MIT",
   "type": "commonjs",
   "dependencies": {
     "@supabase/supabase-js": "^2.94.0",

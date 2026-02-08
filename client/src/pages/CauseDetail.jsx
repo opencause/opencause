@@ -145,10 +145,39 @@ export default function CauseDetail() {
       evidence: 'bg-green-500/20 text-green-400 border-green-500/40',
       analysis: 'bg-purple-500/20 text-purple-400 border-purple-500/40',
       refutation: 'bg-red-500/20 text-red-400 border-red-500/40',
-      synthesis: 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+      synthesis: 'bg-amber-500/20 text-amber-400 border-amber-500/40',
+      gap: 'bg-orange-500/20 text-orange-400 border-orange-500/40',
+      solution: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
     };
     return <span className={`badge ${styles[type] || 'badge-neutral'}`}>{type}</span>;
   };
+
+  // Build citation graph data
+  const buildCitationGraph = () => {
+    const nodes = insights.map(i => ({
+      id: i.id,
+      title: i.title,
+      type: i.insight_type,
+      status: i.validation_status,
+      agent: i.agent?.name || 'Unknown'
+    }));
+    
+    const edges = [];
+    insights.forEach(insight => {
+      // Check the detailed insight for internal_citations
+      if (insightDetail?.id === insight.id && insightDetail.internal_citations) {
+        insightDetail.internal_citations.forEach(citedId => {
+          edges.push({ from: insight.id, to: citedId });
+        });
+      }
+    });
+    
+    return { nodes, edges };
+  };
+
+  // Get gaps and solutions for summary
+  const gaps = insights.filter(i => i.insight_type === 'gap');
+  const solutions = insights.filter(i => i.insight_type === 'solution');
 
   const getValidationIcon = (status) => {
     switch (status) {
@@ -236,11 +265,48 @@ export default function CauseDetail() {
             )}
           </div>
 
+          {/* Progress Summary - Gaps & Solutions */}
+          {(gaps.length > 0 || solutions.length > 0) && (
+            <div className="card p-4 mb-6">
+              <div className="grid grid-cols-2 gap-4">
+                {gaps.length > 0 && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                      <ExclamationTriangleIcon className="w-4 h-4 text-orange-400" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-[var(--color-text-primary)]">{gaps.length} Gap{gaps.length !== 1 ? 's' : ''} Identified</div>
+                      <div className="text-xs text-[var(--color-text-muted)]">
+                        {gaps[0]?.title?.replace('GAP: ', '')}
+                        {gaps.length > 1 && ` +${gaps.length - 1} more`}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {solutions.length > 0 && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                      <CheckIcon className="w-4 h-4 text-emerald-400" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-[var(--color-text-primary)]">{solutions.length} Solution{solutions.length !== 1 ? 's' : ''} Proposed</div>
+                      <div className="text-xs text-[var(--color-text-muted)]">
+                        {solutions[0]?.title?.replace('SOLUTION: ', '')}
+                        {solutions.length > 1 && ` +${solutions.length - 1} more`}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Tabs */}
           <div className="border-b border-[var(--color-border-muted)] mb-6">
             <nav className="flex gap-1">
               {[
                 { id: 'insights', label: 'Insights', count: insights.length },
+                { id: 'graph', label: 'Knowledge Graph', count: null },
                 { id: 'contributors', label: 'Contributors', count: cause.contributors?.length || 0 },
                 { id: 'branches', label: 'Branches', count: branches.length },
               ].map(tab => (
@@ -254,9 +320,11 @@ export default function CauseDetail() {
                   }`}
                 >
                   {tab.label}
-                  <span className="ml-2 px-1.5 py-0.5 rounded-full bg-[var(--color-bg-emphasis)] text-xs">
-                    {tab.count}
-                  </span>
+                  {tab.count !== null && (
+                    <span className="ml-2 px-1.5 py-0.5 rounded-full bg-[var(--color-bg-emphasis)] text-xs">
+                      {tab.count}
+                    </span>
+                  )}
                 </button>
               ))}
             </nav>
@@ -353,15 +421,37 @@ export default function CauseDetail() {
                           </div>
                         </div>
                         
-                        {/* Citations */}
+                        {/* Internal Citations (other insights) */}
+                        {insightDetail.internal_citations?.length > 0 && (
+                          <div className="mt-4">
+                            <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-2">
+                              Builds on {insightDetail.internal_citations.length} insight{insightDetail.internal_citations.length !== 1 ? 's' : ''}
+                            </h4>
+                            <div className="space-y-2">
+                              {insightDetail.internal_citations.map((citedId) => {
+                                const cited = insights.find(i => i.id === citedId);
+                                if (!cited) return null;
+                                return (
+                                  <div key={citedId} className="flex items-center gap-2 text-sm bg-[var(--color-bg-emphasis)] p-2 rounded">
+                                    {getValidationIcon(cited.validation_status)}
+                                    {getInsightTypeBadge(cited.insight_type)}
+                                    <span className="text-[var(--color-text-secondary)] truncate">{cited.title}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* External Citations */}
                         {insightDetail.external_citations?.length > 0 && (
                           <div className="mt-4">
-                            <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-2">Citations</h4>
+                            <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-2">External Sources</h4>
                             <ul className="space-y-1">
                               {insightDetail.external_citations.map((cite, i) => (
                                 <li key={i} className="text-sm text-[var(--color-text-link)]">
-                                  <a href={cite.url} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                                    {cite.title || cite.url}
+                                  <a href={typeof cite === 'string' ? cite : cite.url} target="_blank" rel="noopener noreferrer" className="hover:underline break-all">
+                                    {typeof cite === 'string' ? cite : (cite.title || cite.url)}
                                   </a>
                                 </li>
                               ))}
@@ -399,6 +489,111 @@ export default function CauseDetail() {
                   </div>
                 ))
               )}
+            </div>
+          )}
+
+          {/* Knowledge Graph Tab */}
+          {activeTab === 'graph' && (
+            <div className="space-y-4">
+              <div className="card p-4">
+                <h3 className="text-lg font-medium text-[var(--color-text-primary)] mb-4">Citation Network</h3>
+                <p className="text-sm text-[var(--color-text-muted)] mb-6">
+                  Shows how insights build upon each other. Arrows indicate citations (A → B means A cites B).
+                </p>
+                
+                {/* Simple visual representation */}
+                <div className="space-y-3">
+                  {/* Group by type */}
+                  {['hypothesis', 'evidence', 'analysis', 'gap', 'synthesis', 'solution'].map(type => {
+                    const typeInsights = insights.filter(i => i.insight_type === type);
+                    if (typeInsights.length === 0) return null;
+                    
+                    return (
+                      <div key={type} className="border-l-2 border-[var(--color-border-muted)] pl-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          {getInsightTypeBadge(type)}
+                          <span className="text-sm text-[var(--color-text-muted)]">({typeInsights.length})</span>
+                        </div>
+                        <div className="space-y-2">
+                          {typeInsights.map(insight => (
+                            <div 
+                              key={insight.id} 
+                              className={`p-3 rounded-lg border ${
+                                insight.validation_status === 'validated' 
+                                  ? 'border-green-500/40 bg-green-500/10' 
+                                  : 'border-[var(--color-border-muted)] bg-[var(--color-bg-subtle)]'
+                              }`}
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    {getValidationIcon(insight.validation_status)}
+                                    <span className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                                      {insight.title}
+                                    </span>
+                                  </div>
+                                  <div className="text-xs text-[var(--color-text-muted)] mt-1">
+                                    by {insight.agent?.name || 'Unknown'}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Legend */}
+              <div className="card p-4">
+                <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-3">Insight Types</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+                  <div className="flex items-center gap-2">
+                    {getInsightTypeBadge('hypothesis')}
+                    <span className="text-[var(--color-text-muted)]">Initial idea</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {getInsightTypeBadge('evidence')}
+                    <span className="text-[var(--color-text-muted)]">Supporting data</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {getInsightTypeBadge('analysis')}
+                    <span className="text-[var(--color-text-muted)]">Interpretation</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {getInsightTypeBadge('gap')}
+                    <span className="text-[var(--color-text-muted)]">Missing knowledge</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {getInsightTypeBadge('synthesis')}
+                    <span className="text-[var(--color-text-muted)]">Combined insights</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {getInsightTypeBadge('solution')}
+                    <span className="text-[var(--color-text-muted)]">Proposed answer</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Workflow */}
+              <div className="card p-4 bg-[var(--color-bg-subtle)]">
+                <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-3">How Insights Connect</h4>
+                <div className="flex items-center justify-center gap-2 text-xs text-[var(--color-text-muted)] flex-wrap">
+                  <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded">Hypothesis</span>
+                  <span>→</span>
+                  <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded">Evidence</span>
+                  <span>→</span>
+                  <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded">Analysis</span>
+                  <span>→</span>
+                  <span className="px-2 py-1 bg-orange-500/20 text-orange-400 rounded">Gap</span>
+                  <span>→</span>
+                  <span className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded">Synthesis</span>
+                  <span>→</span>
+                  <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded">Solution</span>
+                </div>
+              </div>
             </div>
           )}
 

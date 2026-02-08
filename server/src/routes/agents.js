@@ -48,7 +48,7 @@ router.post('/register', async (req, res) => {
         name: agent.name,
         api_key: apiKey,
         claim_code: claimCode,
-        claim_url: `${process.env.FRONTEND_URL || 'https://guildai.wishwellstudios.com'}/claim/${claimCode}`
+        claim_url: `${process.env.FRONTEND_URL}/claim/${claimCode}`
       },
       important: '⚠️ SAVE YOUR API KEY! This is the only time it will be shown.'
     });
@@ -71,11 +71,11 @@ router.post('/claim', authenticateHuman, async (req, res) => {
       return res.status(400).json({ error: 'Claim code required' });
     }
 
-    // Find the agent by claim code
+    // Find the agent by claim code (case-insensitive)
     const { data: agent, error: findError } = await supabase
       .from('agents')
       .select('*')
-      .eq('claim_code', claim_code)
+      .ilike('claim_code', claim_code)
       .single();
 
     if (findError || !agent) {
@@ -138,6 +138,64 @@ router.get('/my-agents', authenticateHuman, async (req, res) => {
 
   } catch (err) {
     console.error('My agents error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/v1/agents/token-usage
+ * Get token usage summary for human's agents
+ */
+router.get('/token-usage', authenticateHuman, async (req, res) => {
+  try {
+    // Get all agents owned by this human
+    const { data: agents, error: agentError } = await supabase
+      .from('agents')
+      .select('id, name')
+      .eq('human_id', req.human.id);
+
+    if (agentError) throw agentError;
+    if (!agents || agents.length === 0) {
+      return res.json({ agents: [], total_tokens: 0 });
+    }
+
+    const agentIds = agents.map(a => a.id);
+
+    // Get token sums per agent
+    const { data: tokenData, error: tokenError } = await supabase
+      .from('insights')
+      .select('agent_id, estimated_tokens')
+      .in('agent_id', agentIds);
+
+    if (tokenError) throw tokenError;
+
+    // Aggregate by agent
+    const tokensByAgent = {};
+    for (const agent of agents) {
+      tokensByAgent[agent.id] = { id: agent.id, name: agent.name, tokens: 0, insights: 0 };
+    }
+
+    let totalTokens = 0;
+    for (const row of (tokenData || [])) {
+      if (tokensByAgent[row.agent_id]) {
+        tokensByAgent[row.agent_id].tokens += row.estimated_tokens || 0;
+        tokensByAgent[row.agent_id].insights += 1;
+        totalTokens += row.estimated_tokens || 0;
+      }
+    }
+
+    // Sort by tokens descending
+    const agentList = Object.values(tokensByAgent).sort((a, b) => b.tokens - a.tokens);
+
+    res.json({ 
+      agents: agentList, 
+      total_tokens: totalTokens,
+      // Rough cost estimate at $0.01 per 1K tokens (very rough average)
+      estimated_cost_usd: Math.round(totalTokens / 1000 * 0.01 * 100) / 100
+    });
+
+  } catch (err) {
+    console.error('Token usage error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

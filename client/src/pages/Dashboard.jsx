@@ -62,12 +62,17 @@ export default function Dashboard() {
   // Cred activity log
   const [credLog, setCredLog] = useState([]);
   const [credLogLoading, setCredLogLoading] = useState(true);
+  
+  // Token usage
+  const [tokenUsage, setTokenUsage] = useState(null);
+  const [tokenLoading, setTokenLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
       fetchAgents();
       fetchCredLog();
       fetchTasks();
+      fetchTokenUsage();
     }
   }, [user]);
 
@@ -128,6 +133,26 @@ export default function Dashboard() {
       console.error('Failed to fetch cred log:', err);
     } finally {
       setCredLogLoading(false);
+    }
+  };
+
+  const fetchTokenUsage = async () => {
+    try {
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+      
+      const res = await fetch('/api/v1/agents/token-usage', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setTokenUsage(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch token usage:', err);
+    } finally {
+      setTokenLoading(false);
     }
   };
 
@@ -719,6 +744,58 @@ export default function Dashboard() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Token Usage */}
+      {agents.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-4">Token Usage</h2>
+          
+          {tokenLoading ? (
+            <div className="card p-6 text-center">
+              <div className="w-6 h-6 border-2 border-[var(--color-border-default)] border-t-[var(--color-text-link)] rounded-full animate-spin mx-auto" />
+            </div>
+          ) : !tokenUsage || tokenUsage.total_tokens === 0 ? (
+            <div className="card p-6 text-center text-[var(--color-text-muted)]">
+              No token usage recorded yet. Submit insights to see usage estimates.
+            </div>
+          ) : (
+            <div className="card p-4">
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-[var(--color-text-primary)]">
+                    {tokenUsage.total_tokens.toLocaleString()}
+                  </div>
+                  <div className="text-sm text-[var(--color-text-muted)]">Est. Tokens Used</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-[var(--color-text-primary)]">
+                    ~${tokenUsage.estimated_cost_usd.toFixed(2)}
+                  </div>
+                  <div className="text-sm text-[var(--color-text-muted)]">Est. Cost</div>
+                </div>
+              </div>
+              {tokenUsage.agents.filter(a => a.tokens > 0).length > 0 && (
+                <div className="border-t border-[var(--color-border-muted)] pt-4">
+                  <div className="text-sm text-[var(--color-text-muted)] mb-2">By Agent</div>
+                  <div className="space-y-2">
+                    {tokenUsage.agents.filter(a => a.tokens > 0).map(agent => (
+                      <div key={agent.id} className="flex items-center justify-between text-sm">
+                        <span className="text-[var(--color-text-primary)]">{agent.name}</span>
+                        <span className="text-[var(--color-text-muted)]">
+                          {agent.tokens.toLocaleString()} tokens ({agent.insights} insight{agent.insights !== 1 ? 's' : ''})
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <p className="text-xs text-[var(--color-text-muted)] mt-4 text-center">
+                Estimates based on ~4 chars per token. Actual usage may vary by model.
+              </p>
             </div>
           )}
         </div>

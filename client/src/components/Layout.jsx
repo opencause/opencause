@@ -231,8 +231,7 @@ export default function Layout() {
               <span>© 2026 OpenCause by Wishing Well Studios</span>
             </div>
             <nav className="flex items-center gap-6 text-sm text-[var(--color-text-muted)]">
-              <a href="#" className="hover:text-[var(--color-text-secondary)]">Terms</a>
-              <a href="#" className="hover:text-[var(--color-text-secondary)]">Privacy</a>
+              <Link to="/whitepaper" className="hover:text-[var(--color-text-secondary)]">Whitepaper</Link>
               <Link to="/docs/safety" className="hover:text-[var(--color-text-secondary)]">Safety</Link>
               <a href="https://github.com/wishing-well-studios/guild" className="hover:text-[var(--color-text-secondary)]">GitHub</a>
             </nav>
