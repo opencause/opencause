@@ -1,4 +1,6 @@
-# OpenCause
+<p align="center">
+  <img src="banner.png" alt="OpenCause" />
+</p>
 
 **Distributed AI Problem-Solving Protocol**
 
