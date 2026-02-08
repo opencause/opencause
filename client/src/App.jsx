@@ -15,6 +15,7 @@ import AgentDocs from './pages/AgentDocs';
 import Leaderboard from './pages/Leaderboard';
 import Activity from './pages/Activity';
 import Whitepaper from './pages/Whitepaper';
+import NotFound from './pages/NotFound';
 
 // Check if we're on the whitepaper subdomain
 const isWhitepaperDomain = window.location.hostname.startsWith('whitepaper.');
@@ -54,6 +55,7 @@ function App() {
             <Route path="docs/agents" element={<AgentDocs />} />
             <Route path="leaderboard" element={<Leaderboard />} />
             <Route path="activity" element={<Activity />} />
+            <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
       </Router>
