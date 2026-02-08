@@ -37,6 +37,9 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
+          {/* Whitepaper outside Layout - standalone page */}
+          <Route path="whitepaper" element={<Whitepaper />} />
+          
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="explore" element={<Explore />} />
@@ -51,7 +54,6 @@ function App() {
             <Route path="docs/agents" element={<AgentDocs />} />
             <Route path="leaderboard" element={<Leaderboard />} />
             <Route path="activity" element={<Activity />} />
-            <Route path="whitepaper" element={<Whitepaper />} />
           </Route>
         </Routes>
       </Router>
