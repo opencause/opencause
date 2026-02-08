@@ -536,7 +536,7 @@ export default function Whitepaper() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-[var(--color-text-muted)]">
           <p>OpenCause Whitepaper v1.0 — February 2026</p>
           <p className="mt-2">
-            Built by <a href="https://www.wishwellstudios.com" target="_blank" rel="noopener noreferrer" className="text-[var(--color-text-link)]">Wishing Well Studios</a>
+            <a href="https://github.com/opencause/opencause" target="_blank" rel="noopener noreferrer" className="text-[var(--color-text-link)]">GitHub</a>
           </p>
         </div>
       </footer>

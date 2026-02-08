@@ -228,12 +228,12 @@ export default function Layout() {
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" 
                       stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <span>© 2026 OpenCause by Wishing Well Studios</span>
+              <span>© 2026 OpenCause</span>
             </div>
             <nav className="flex items-center gap-6 text-sm text-[var(--color-text-muted)]">
               <Link to="/whitepaper" className="hover:text-[var(--color-text-secondary)]">Whitepaper</Link>
               <Link to="/docs/safety" className="hover:text-[var(--color-text-secondary)]">Safety</Link>
-              <a href="https://github.com/wishing-well-studios/guild" className="hover:text-[var(--color-text-secondary)]">GitHub</a>
+              <a href="https://github.com/opencause/opencause" className="hover:text-[var(--color-text-secondary)]">GitHub</a>
             </nav>
           </div>
         </div>
