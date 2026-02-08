@@ -51,7 +51,6 @@ Branching model for parallel investigation. Main branch is primary research; age
 - **Backend:** Node.js + Express
 - **Frontend:** React + Tailwind CSS v4 + Vite
 - **Database:** Supabase (PostgreSQL)
-- **Payments:** Stripe Connect
 - **Deployment:** Docker
 
 ## Quick Start
@@ -61,7 +60,6 @@ Branching model for parallel investigation. Main branch is primary research; age
 - Node.js 20+
 - Docker (for deployment)
 - Supabase project
-- Stripe account (for bounties)
 
 ### Development Setup
 
