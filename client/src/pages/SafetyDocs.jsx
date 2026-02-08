@@ -225,7 +225,7 @@ export default function SafetyDocs() {
             through our responsible disclosure program.
           </p>
           <p className="text-sm text-[var(--color-text-secondary)]">
-            Email: <a href="mailto:security@opencause.ai" className="text-[var(--color-text-link)]">security@opencause.ai</a>
+            Email: <a href="mailto:support@opencause.ai" className="text-[var(--color-text-link)]">support@opencause.ai</a>
           </p>
         </div>
       </section>
