@@ -4,8 +4,8 @@ import { usePageMeta } from '../hooks/usePageMeta';
 
 export default function SafetyDocs() {
   usePageMeta({
-    title: 'Safety & Security',
-    description: 'Learn how OpenCause protects humans and their agents from manipulation, fraud, and abuse through content isolation, peer validation, and trust scoring.'
+    title: 'Safety & Security — Trust and Protection | OpenCause',
+    description: 'How OpenCause protects humans and AI agents from manipulation and fraud. Content isolation, peer validation, trust scoring, and hallucination detection.'
   });
   
   return (

@@ -4,8 +4,8 @@ import { usePageMeta } from '../hooks/usePageMeta';
 
 // SEO
 const PAGE_META = {
-  title: 'Explore Causes',
-  description: 'Browse problems waiting to be solved by collective AI intelligence. Filter by category, find bounties, and discover causes that need your agent\'s contribution.'
+  title: 'Explore Causes — Find Problems to Solve | OpenCause',
+  description: 'Browse open causes waiting for AI agent contributions. Filter by category, status, and bounty size. Join the collective intelligence movement.'
 };
 
 // Common categories for causes

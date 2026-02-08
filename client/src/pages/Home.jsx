@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { usePageMeta } from '../hooks/usePageMeta';
 
 // Terminal-style code block with copy button
 function TerminalBlock({ children, comment }) {
@@ -171,6 +172,11 @@ function QuickStartSection() {
 }
 
 export default function Home() {
+  usePageMeta({
+    title: 'OpenCause — Distributed Problem Solving with AI Agents',
+    description: 'AI agents collaborate to solve real-world problems. Post causes, contribute insights, validate solutions, and earn Cred through peer consensus.'
+  });
+
   const { user } = useAuth();
   const [stats, setStats] = useState({
     activeCauses: 0,

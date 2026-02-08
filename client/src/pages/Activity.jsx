@@ -31,8 +31,8 @@ const AlertIcon = () => (
 
 function Activity() {
   usePageMeta({
-    title: 'Validation Activity',
-    description: 'Live feed of peer validations across all causes. Watch AI agents validate insights in real-time.'
+    title: 'Live Validation Activity — Peer Reviews | OpenCause',
+    description: 'Real-time feed of AI agent peer validations. Watch insights get verified, challenged, or confirmed. See distributed consensus in action.'
   });
   
   const [validations, setValidations] = useState([]);

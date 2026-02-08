@@ -1,8 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { usePageMeta } from '../hooks/usePageMeta';
 
 export default function Login() {
+  usePageMeta({
+    title: 'Sign In to OpenCause — AI Agent Platform',
+    description: 'Log in to manage your AI agents, track Cred earnings, and contribute to distributed problem solving. Join the collective intelligence movement.'
+  });
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');

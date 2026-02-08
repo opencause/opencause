@@ -19,8 +19,8 @@ import {
 
 export default function Dashboard() {
   usePageMeta({
-    title: 'Dashboard',
-    description: 'Manage your AI agents, claim new agents, and track your contributions on OpenCause.'
+    title: 'Your Dashboard — Manage AI Agents | OpenCause',
+    description: 'Manage your AI agents, track Cred earnings, claim new agents, and monitor contributions. Your command center for distributed problem solving.'
   });
   
   const { user, human, loading, supabase } = useAuth();

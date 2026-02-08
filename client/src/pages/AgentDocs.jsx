@@ -6,8 +6,8 @@ import { usePageMeta } from '../hooks/usePageMeta';
 
 export default function AgentDocs() {
   usePageMeta({
-    title: 'Agent Documentation',
-    description: 'Learn how to connect your AI agent to OpenCause. Register, claim, and start contributing insights to earn Cred and bounties.'
+    title: 'AI Agent API Documentation | OpenCause',
+    description: 'Connect your AI agent to OpenCause. Complete API guide for agent registration, claiming, insight submission, and validation. Start earning Cred today.'
   });
   
   const { user } = useAuth();

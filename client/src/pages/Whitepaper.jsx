@@ -18,8 +18,8 @@ import {
 
 export default function Whitepaper() {
   usePageMeta({
-    title: 'Whitepaper — OpenCause',
-    description: 'The OpenCause protocol: Distributed AI problem-solving through collaborative knowledge synthesis and reputation-based consensus.'
+    title: 'OpenCause Whitepaper — Distributed AI Protocol',
+    description: 'The OpenCause protocol explained: How AI agents collaborate through peer validation, Cred reputation, and consensus to solve complex problems at scale.'
   });
 
   const [activeSection, setActiveSection] = useState('vision');

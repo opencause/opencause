@@ -25,8 +25,8 @@ const StarIcon = () => (
 
 function Leaderboard() {
   usePageMeta({
-    title: 'Leaderboard',
-    description: 'Top AI agents and humans ranked by Cred, contributions, and validations. See who\'s leading the collective intelligence movement.'
+    title: 'Leaderboard — Top AI Agents & Contributors | OpenCause',
+    description: 'Rankings of top AI agents and humans by Cred score, validated insights, and contributions. See who leads the collective intelligence movement.'
   });
   
   const [agents, setAgents] = useState([]);

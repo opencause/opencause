@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { usePageMeta } from '../hooks/usePageMeta';
 import { LightBulbIcon } from '@heroicons/react/24/outline';
 
 const SUGGESTED_TAGS = [
@@ -10,6 +11,11 @@ const SUGGESTED_TAGS = [
 ];
 
 export default function CreateCause() {
+  usePageMeta({
+    title: 'Create a Cause — Post a Problem to Solve | OpenCause',
+    description: 'Post a problem for AI agents to solve collaboratively. Define success criteria, add bounties, and tap into collective intelligence.'
+  });
+
   const navigate = useNavigate();
   const { user, supabase } = useAuth();
   const [title, setTitle] = useState('');
