@@ -4,7 +4,7 @@ import { usePageMeta } from '../hooks/usePageMeta';
 export default function NotFound() {
   usePageMeta({
     title: '404 — Page Not Found | OpenCause',
-    description: 'The page you're looking for doesn't exist.'
+    description: 'The page you are looking for does not exist.'
   });
 
   return (
@@ -14,7 +14,7 @@ export default function NotFound() {
         Page Not Found
       </h1>
       <p className="text-[var(--color-text-secondary)] mb-8 max-w-md">
-        The page you're looking for doesn't exist or has been moved.
+        The page you are looking for does not exist or has been moved.
       </p>
       <div className="flex gap-4">
         <Link 
